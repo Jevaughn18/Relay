@@ -8,6 +8,7 @@ export * from './a2a-types';
 // Official A2A integration
 export * from './a2a-adapter';
 export * from './a2a-relay-server';
+export * from './a2a-relay-client';
 
 // HTTP communication
 export * from './agent-server';

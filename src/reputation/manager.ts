@@ -16,7 +16,7 @@ import { ExecutionProof } from '../schemas/execution';
  * Reputation manager
  */
 export class ReputationManager {
-  private reputations: Map<string, ReputationScore> = new Map();
+  protected reputations: Map<string, ReputationScore> = new Map();
 
   /**
    * Get or create reputation for an agent
@@ -56,6 +56,13 @@ export class ReputationManager {
       },
       lastUpdated: new Date(),
     };
+  }
+
+  /**
+   * Determine tier based on score
+   */
+  protected determineTier(score: number): 'bronze' | 'silver' | 'gold' | 'platinum' | undefined {
+    return ReputationCalculator.determineTier(score, 0);
   }
 
   /**

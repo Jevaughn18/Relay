@@ -56,6 +56,13 @@ export class RelayClient {
   }
 
   /**
+   * Get agent ID
+   */
+  getAgentId(): string {
+    return this.agentId;
+  }
+
+  /**
    * Generate and store keys for this agent
    */
   async generateKeys(): Promise<KeyPair> {

@@ -9,8 +9,9 @@ import { AgentCard, AGENT_CARD_PATH } from '@a2a-js/sdk';
 import {
   DefaultRequestHandler,
   InMemoryTaskStore,
+  DefaultExecutionEventBusManager,
 } from '@a2a-js/sdk/server';
-import { agentCardHandler, jsonRpcHandler, restHandler, UserBuilder } from '@a2a-js/sdk/server/express';
+import { agentCardHandler, restHandler, UserBuilder } from '@a2a-js/sdk/server/express';
 import { RelayClient } from '../sdk/relay-client';
 import { CapabilityManifest } from '../schemas/capability';
 import { createAgentCard, createAgentExecutor } from './a2a-adapter';
@@ -69,20 +70,103 @@ export class A2ARelayServer {
     // Create task store
     const taskStore = new InMemoryTaskStore();
 
-    // Create request handler
-    const requestHandler = new DefaultRequestHandler(executor, taskStore);
+    // Create event bus manager
+    const eventBusManager = new DefaultExecutionEventBusManager();
 
-    // Agent Card endpoint (well-known path)
-    this.app.get(`/${AGENT_CARD_PATH}`, agentCardHandler(this.agentCard));
+    // Create request handler with correct parameter order: agentCard, taskStore, executor
+    const requestHandler = new DefaultRequestHandler(
+      this.agentCard,
+      taskStore,
+      executor,
+      eventBusManager
+    );
+
+    // Agent Card endpoint (well-known path) - use requestHandler as provider
+    this.app.get(
+      `/${AGENT_CARD_PATH}`,
+      agentCardHandler({
+        agentCardProvider: requestHandler,
+      })
+    );
 
     // Compatibility endpoint
-    this.app.get('/agent-card', agentCardHandler(this.agentCard));
+    this.app.get(
+      '/agent-card',
+      agentCardHandler({
+        agentCardProvider: requestHandler,
+      })
+    );
 
-    // JSON-RPC endpoint
-    this.app.post('/a2a/jsonrpc', jsonRpcHandler(requestHandler));
+    // Debug: Simple manual agent card endpoint
+    this.app.get('/.well-known/agent-card.json', (_req, res) => {
+      res.json(this.agentCard);
+    });
 
-    // REST endpoints
-    this.app.use('/a2a/rest', restHandler(requestHandler));
+    // JSON-RPC endpoint - manual implementation
+    this.app.post('/a2a/jsonrpc', async (req, res) => {
+      try {
+        const rpcRequest = req.body;
+
+        // Route to appropriate handler method
+        switch (rpcRequest.method) {
+          case 'message/send': {
+            const result = await requestHandler.sendMessage(rpcRequest.params);
+            res.json({
+              jsonrpc: '2.0',
+              id: rpcRequest.id,
+              result,
+            });
+            break;
+          }
+
+          case 'task/get': {
+            const result = await requestHandler.getTask(rpcRequest.params);
+            res.json({
+              jsonrpc: '2.0',
+              id: rpcRequest.id,
+              result: { task: result },
+            });
+            break;
+          }
+
+          case 'task/cancel': {
+            const result = await requestHandler.cancelTask(rpcRequest.params);
+            res.json({
+              jsonrpc: '2.0',
+              id: rpcRequest.id,
+              result: { task: result },
+            });
+            break;
+          }
+
+          default:
+            res.json({
+              jsonrpc: '2.0',
+              id: rpcRequest.id,
+              error: {
+                code: -32601,
+                message: `Method not found: ${rpcRequest.method}`,
+              },
+            });
+        }
+      } catch (error: any) {
+        res.status(500).json({
+          jsonrpc: '2.0',
+          id: req.body.id,
+          error: {
+            code: -32603,
+            message: error.message,
+          },
+        });
+      }
+    });
+
+    // REST endpoints - use options object
+    const httpRestHandler = restHandler({
+      requestHandler,
+      userBuilder: UserBuilder.noAuthentication,
+    });
+    this.app.use('/a2a/rest', express.json(), httpRestHandler);
 
     // Relay-specific endpoints
     this.app.get('/relay/manifest', (_req, res) => {

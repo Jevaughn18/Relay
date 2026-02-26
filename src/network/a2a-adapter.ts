@@ -60,12 +60,12 @@ export class RelayAgentExecutor implements AgentExecutor {
   ) {}
 
   async execute(requestContext: RequestContext, eventBus: ExecutionEventBus): Promise<void> {
-    const { message } = requestContext;
+    const { userMessage } = requestContext;
 
     try {
       // Parse the incoming A2A message
-      const capability = this.extractCapability(message);
-      const taskInput = this.extractTaskInput(message);
+      const capability = this.extractCapability(userMessage);
+      const taskInput = this.extractTaskInput(userMessage);
 
       // Send initial status using A2A SDK API
       const statusMessage: Message = {
@@ -110,9 +110,19 @@ export class RelayAgentExecutor implements AgentExecutor {
   /**
    * Cancel task execution
    */
-  async cancelTask(): Promise<void> {
+  async cancelTask(taskId: string, eventBus: ExecutionEventBus): Promise<void> {
     // Implement task cancellation if needed
-    console.log('Task cancellation requested');
+    console.log(`Task cancellation requested for task: ${taskId}`);
+
+    // Publish cancellation status
+    const cancelMessage: Message = {
+      kind: 'message',
+      messageId: uuidv4(),
+      role: 'agent',
+      parts: [{ kind: 'text', text: `Task ${taskId} has been cancelled` }],
+    };
+    eventBus.publish(cancelMessage);
+    eventBus.finished();
   }
 
   /**

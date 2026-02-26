@@ -34,9 +34,9 @@ export interface EscrowTransaction {
  * Escrow manager for handling payments and stakes
  */
 export class EscrowManager {
-  private accounts: Map<string, EscrowAccount> = new Map();
-  private contractLocks: Map<string, ContractEscrowLock> = new Map();
-  private transactions: EscrowTransaction[] = [];
+  protected accounts: Map<string, EscrowAccount> = new Map();
+  protected contractLocks: Map<string, ContractEscrowLock> = new Map();
+  protected transactions: EscrowTransaction[] = [];
 
   /**
    * Create or get an escrow account
