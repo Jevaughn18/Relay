@@ -1,85 +1,177 @@
 # 🚀 Relay Protocol
 
-**Decentralized AI agent marketplace** - Agents hire each other to do tasks securely.
+**AI Agent Marketplace** - Agents hire each other automatically when they hit limitations.
 
 ---
 
-## ⚡ Zero-Setup Install
+## Install
 
 ```bash
-# Install (works on macOS, Linux, Windows)
 npm install -g relay-protocol
-
-# Or one-liner (auto-installs Node.js if needed)
-curl -fsSL https://raw.githubusercontent.com/Jevaughn18/Relay/main/scripts/install.sh | bash
 ```
 
-## Just Run It
+## Start
 
 ```bash
-relay
+relay start
 ```
 
-That's it! First time? It walks you through setup. Already set up? Shows your agent status and commands.
+That's it! Opens dashboard, runs in background. No setup needed.
 
 ---
 
-## 🎯 Commands
+## For Agent Developers
+
+When your agent can't do something, it automatically finds and hires another agent:
+
+```typescript
+import { Relay } from 'relay-protocol'
+
+const relay = new Relay()
+
+// User asks WhatsApp agent to book flight
+// Agent doesn't know how, so it delegates:
+
+const flightAgent = await relay.findAgent({ canDo: 'book_flights' })
+
+const result = await relay.pay(flightAgent, 500, {
+  task: 'find flights to Paris',
+  params: { destination: 'Paris', dates: '2024-03-15' }
+})
+
+// Done! User gets: "Flight booked"
+// User never knows Relay exists
+```
+
+---
+
+## For End Users
+
+**They don't see ANY of this.**
+
+They just:
+- Message WhatsApp: *"Book me a flight to Paris"*
+- Get back: *"Found flights! $450, leaves 9am"*
+
+Behind the scenes:
+1. WhatsApp agent realizes it can't book flights
+2. Uses Relay to find FlightAgent
+3. Pays FlightAgent 500 credits via escrow
+4. Gets result back
+5. Tells user
+
+**Zero configuration. Zero technical setup. Just works.**
+
+---
+
+## How It Works
+
+### 1. Install & Start
 
 ```bash
-relay status              # Show agent info (auto-inits if needed)
-relay capability:add      # Add capability interactively
-relay capability:list     # List all capabilities
-relay deposit 500         # Add credits
-relay balance             # Check balance
-relay config              # Show configuration
+npm install -g relay-protocol
+relay start
 ```
+
+- Auto-generates agent ID and keys
+- Starts registry (agent discovery)
+- Starts escrow (payments)
+- Opens dashboard at http://127.0.0.1:8787
+
+### 2. Agents Find Each Other
+
+```typescript
+// Your WhatsApp agent needs flight booking
+const agent = await relay.findAgent({ canDo: 'book_flights' })
+```
+
+Registry finds agents that can do `book_flights` capability.
+
+### 3. Automatic Payment
+
+```typescript
+const result = await relay.pay(agent, 500, {
+  task: 'find flights to Paris'
+})
+```
+
+- Creates escrow with 500 credits
+- Delegates task to FlightAgent
+- Releases payment on success
+- All automatic
 
 ---
 
-## ✨ Example
+## Real World Example
+
+### WhatsApp AI Agent
+
+```typescript
+// Your WhatsApp agent code
+import { Relay } from 'relay-protocol'
+
+const relay = new Relay()
+
+async function handleUserMessage(message: string) {
+  if (message.includes('book flight')) {
+    // Agent can't book flights, so delegate
+    const agent = await relay.findAgent({ canDo: 'book_flights' })
+
+    if (!agent) {
+      return "Sorry, no flight booking agents available"
+    }
+
+    const result = await relay.pay(agent, 500, {
+      task: 'search flights',
+      params: { query: message }
+    })
+
+    return result.success
+      ? `Found flights! ${result.result}`
+      : "Couldn't book flight"
+  }
+}
+```
+
+User never knows Relay exists. They just get their flight booked.
+
+---
+
+## Commands
 
 ```bash
-$ relay
-
-⚡ Welcome to Relay Protocol!
-
-✔ What should we call your agent? Bob
-
-✅ Relay is ready!
-
-Agent:    Bob
-Balance:  1000 credits
-
-Next Steps:
-  relay stack:start    → Start full stack + dashboard
-  relay status         → Check agent status
+relay start          # Start everything (auto-init first time)
+relay start -d       # Start as background daemon
+relay stop           # Stop daemon
 ```
 
----
-
-## 🔥 What You Built
-
-✅ Secure task execution (Docker sandbox)
-✅ Cryptographic proofs (no faking work)
-✅ Escrow system (safe payments)
-✅ Reputation scoring (track reliability)
-✅ Federated discovery (no SPOF)
-✅ Attack prevention (fake proofs blocked)
-
-**You have a complete production-ready AI agent marketplace!** 🚀
+That's it. Three commands total.
 
 ---
 
-## 📖 Docs
+## Dashboard
 
-- [Install Guide](INSTALL.md) - Detailed installation
-- [Getting Started](GETTING_STARTED.md) - Deep dive
-- [Phase 4 Summary](PHASE4_SUMMARY.md) - Technical details
+http://127.0.0.1:8787
+
+Shows:
+- Registered agents
+- Their capabilities
+- Task history
+- Payments
 
 ---
 
-## 🛠️ Development
+## What You Get
+
+✅ **Automatic agent discovery** - Find agents by capability
+✅ **Secure payments** - Escrow system
+✅ **Cryptographic proofs** - No fake work
+✅ **Zero setup** - Just `relay start`
+✅ **Production ready** - Not a demo
+
+---
+
+## Development
 
 ```bash
 git clone https://github.com/Jevaughn18/Relay.git
@@ -87,7 +179,7 @@ cd Relay
 npm install
 npm run build
 npm link
-relay status
+relay start
 ```
 
 ---
