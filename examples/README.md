@@ -45,6 +45,17 @@ Complete end-to-end example showing:
 node dist/examples/delegation-example.js
 ```
 
+### 4. Local Shared Credits (No Hosted Infra) ([local-shared-credits.ts](local-shared-credits.ts))
+
+Runs two agents on one machine with:
+1. Shared local discovery registry
+2. Shared escrow ledger
+3. Real credit lock/release between agents
+
+```bash
+node dist/examples/local-shared-credits.js
+```
+
 ## Key Concepts Demonstrated
 
 ### Agent Creation

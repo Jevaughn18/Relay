@@ -8,6 +8,7 @@ import {
   CapabilityManifest,
   CapabilityManifestHelper,
   CapabilityManifestSchema,
+  SandboxLevel,
   VerificationMode,
 } from '../schemas/capability';
 import {
@@ -23,6 +24,7 @@ import { RelaySign, KeyManager, KeyPair } from '../crypto/signer';
 import { ContractValidator } from '../contracts/validator';
 import { ExecutionVerifier } from '../contracts/execution-verifier';
 import { EscrowManager } from '../escrow/escrow';
+import { SharedEscrowClient } from '../escrow/shared-escrow-client';
 import { ReputationManager } from '../reputation/manager';
 import { SandboxExecutionResult, SandboxExecutor } from '../sandbox/sandbox-executor';
 
@@ -33,6 +35,9 @@ export interface RelayClientConfig {
   agentId: string;
   keyPair?: KeyPair;
   autoGenerateKeys?: boolean;
+  escrowManager?: EscrowManager;
+  sharedEscrowClient?: SharedEscrowClient;
+  reputationManager?: ReputationManager;
 }
 
 export interface SubmitDeliverableOptions {
@@ -48,14 +53,16 @@ export class RelayClient {
   private agentId: string;
   private keyManager: KeyManager;
   private escrowManager: EscrowManager;
+  private sharedEscrowClient?: SharedEscrowClient;
   private reputationManager: ReputationManager;
   private manifest?: CapabilityManifest;
 
   constructor(config: RelayClientConfig) {
     this.agentId = config.agentId;
     this.keyManager = new KeyManager();
-    this.escrowManager = new EscrowManager();
-    this.reputationManager = new ReputationManager();
+    this.escrowManager = config.escrowManager || new EscrowManager();
+    this.sharedEscrowClient = config.sharedEscrowClient;
+    this.reputationManager = config.reputationManager || new ReputationManager();
 
     // Store or generate keys
     if (config.keyPair) {
@@ -133,7 +140,9 @@ export class RelayClient {
     }
   ): Promise<TaskContract> {
     // Validate we have funds
-    const balance = this.escrowManager.getBalance(this.agentId);
+    const balance = this.sharedEscrowClient
+      ? await this.sharedEscrowClient.getBalance(this.agentId)
+      : this.escrowManager.getBalance(this.agentId);
     if (balance.available < paymentAmount) {
       throw new Error(
         `Insufficient balance. Required: ${paymentAmount}, Available: ${balance.available}`
@@ -167,12 +176,19 @@ export class RelayClient {
         criteria: {},
         required: true,
       },
-      {
+    ];
+
+    // Only require execution attestation for hardened sandbox modes.
+    if (
+      performerManifest.sandboxLevel === SandboxLevel.ISOLATED ||
+      performerManifest.sandboxLevel === SandboxLevel.READ_ONLY
+    ) {
+      verificationRules.push({
         type: 'attestation',
         criteria: {},
         required: true,
-      },
-    ];
+      });
+    }
 
     if (performerManifest.verificationMode === VerificationMode.AUTOMATED) {
       verificationRules.push({ type: 'automated', criteria: {}, required: true });
@@ -243,9 +259,11 @@ export class RelayClient {
 
     // Validate we have stake
     if (contract.stakeAmount > 0) {
-      const balance = this.escrowManager.getBalance(this.agentId);
-      if (balance.available < contract.stakeAmount) {
-        throw new Error(`Insufficient stake. Required: ${contract.stakeAmount}`);
+      if (!this.sharedEscrowClient) {
+        const balance = this.escrowManager.getBalance(this.agentId);
+        if (balance.available < contract.stakeAmount) {
+          throw new Error(`Insufficient stake. Required: ${contract.stakeAmount}`);
+        }
       }
     }
 
@@ -269,6 +287,10 @@ export class RelayClient {
    * Fund contract escrow
    */
   fundContract(contract: TaskContract): void {
+    if (this.sharedEscrowClient) {
+      throw new Error('Shared escrow configured. Use fundContractShared(contract).');
+    }
+
     if (!contract.delegatorSignature || !contract.performerSignature) {
       throw new Error('Contract must be fully signed before funding');
     }
@@ -372,6 +394,10 @@ export class RelayClient {
    * Verify and settle contract
    */
   settleContract(contract: TaskContract, proof: ExecutionProof): void {
+    if (this.sharedEscrowClient) {
+      throw new Error('Shared escrow configured. Use settleContractShared(contract, proof).');
+    }
+
     // Validate proof
     const validation = ContractValidator.validateExecutionProof(proof, contract);
     if (!validation.valid) {
@@ -416,14 +442,102 @@ export class RelayClient {
    * Deposit funds into escrow
    */
   depositFunds(amount: number): void {
+    if (this.sharedEscrowClient) {
+      throw new Error('Shared escrow configured. Use depositFundsShared(amount).');
+    }
     this.escrowManager.deposit(this.agentId, amount);
+  }
+
+  /**
+   * Deposit funds into a shared escrow service
+   */
+  async depositFundsShared(amount: number): Promise<void> {
+    if (!this.sharedEscrowClient) {
+      throw new Error('No shared escrow configured for this client');
+    }
+    await this.sharedEscrowClient.deposit(this.agentId, amount);
   }
 
   /**
    * Get escrow balance
    */
   getBalance(): { balance: number; available: number; locked: number } {
+    if (this.sharedEscrowClient) {
+      throw new Error('Shared escrow configured. Use getBalanceShared().');
+    }
     return this.escrowManager.getBalance(this.agentId);
+  }
+
+  /**
+   * Get balance from shared escrow service
+   */
+  async getBalanceShared(): Promise<{ balance: number; available: number; locked: number }> {
+    if (!this.sharedEscrowClient) {
+      throw new Error('No shared escrow configured for this client');
+    }
+    return this.sharedEscrowClient.getBalance(this.agentId);
+  }
+
+  /**
+   * Get balance safely regardless of escrow mode.
+   * Shared escrow -> remote balance, local mode -> in-process balance.
+   */
+  async getBalanceSafe(): Promise<{ balance: number; available: number; locked: number }> {
+    if (this.sharedEscrowClient) {
+      return this.getBalanceShared();
+    }
+    return this.getBalance();
+  }
+
+  /**
+   * Lock funds in shared escrow for a contract
+   */
+  async fundContractShared(contract: TaskContract): Promise<void> {
+    if (!this.sharedEscrowClient) {
+      throw new Error('No shared escrow configured for this client');
+    }
+    if (!contract.delegatorSignature || !contract.performerSignature) {
+      throw new Error('Contract must be fully signed before funding');
+    }
+    await this.sharedEscrowClient.lock(contract);
+    contract.escrowFunded = true;
+    contract.status = ContractStatus.FUNDED;
+  }
+
+  /**
+   * Verify and settle a contract against shared escrow
+   */
+  async settleContractShared(contract: TaskContract, proof: ExecutionProof): Promise<void> {
+    if (!this.sharedEscrowClient) {
+      throw new Error('No shared escrow configured for this client');
+    }
+
+    const validation = ContractValidator.validateExecutionProof(proof, contract);
+    if (!validation.valid) {
+      throw new Error(`Proof validation failed: ${validation.errors.join(', ')}`);
+    }
+
+    const verificationEnforcement = ExecutionVerifier.enforce(contract, proof);
+    if (!verificationEnforcement.valid) {
+      throw new Error(
+        `Verification enforcement failed: ${verificationEnforcement.errors.join(', ')}`
+      );
+    }
+
+    proof.verified = true;
+    proof.verifiedBy = this.agentId;
+    proof.verifiedAt = new Date();
+    contract.status = ContractStatus.VERIFIED;
+
+    await this.sharedEscrowClient.release(contract.contractId);
+    contract.status = ContractStatus.SETTLED;
+
+    this.reputationManager.updateAfterTaskCompletion(
+      contract.performerId,
+      contract,
+      proof,
+      verificationEnforcement.verificationScore
+    );
   }
 }
 
@@ -432,12 +546,20 @@ export class RelayClient {
  */
 export async function createRelayClient(
   agentId: string,
-  options?: { keyPair?: KeyPair }
+  options?: {
+    keyPair?: KeyPair;
+    escrowManager?: EscrowManager;
+    sharedEscrowClient?: SharedEscrowClient;
+    reputationManager?: ReputationManager;
+  }
 ): Promise<RelayClient> {
   const client = new RelayClient({
     agentId,
     keyPair: options?.keyPair,
     autoGenerateKeys: !options?.keyPair,
+    escrowManager: options?.escrowManager,
+    sharedEscrowClient: options?.sharedEscrowClient,
+    reputationManager: options?.reputationManager,
   });
 
   if (!options?.keyPair) {

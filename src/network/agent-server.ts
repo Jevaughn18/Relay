@@ -91,33 +91,41 @@ export class AgentServer {
     req: http.IncomingMessage,
     res: http.ServerResponse
   ): Promise<void> {
-    const parsedUrl = parse(req.url || '', true);
-    const pathname = parsedUrl.pathname;
+    try {
+      const parsedUrl = parse(req.url || '', true);
+      const pathname = parsedUrl.pathname;
 
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      // CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // Handle OPTIONS
-    if (req.method === 'OPTIONS') {
-      res.writeHead(200);
-      res.end();
-      return;
-    }
+      // Handle OPTIONS
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
 
-    // Route handlers
-    if (pathname === '/health' && req.method === 'GET') {
-      this.handleHealth(req, res);
-    } else if (pathname === '/manifest' && req.method === 'GET') {
-      this.handleManifest(req, res);
-    } else if (pathname === '/message' && req.method === 'POST') {
-      await this.handleMessage(req, res);
-    } else if (pathname === '/status' && req.method === 'GET') {
-      this.handleStatus(req, res);
-    } else {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not found' }));
+      // Route handlers
+      if (pathname === '/health' && req.method === 'GET') {
+        this.handleHealth(req, res);
+      } else if (pathname === '/manifest' && req.method === 'GET') {
+        this.handleManifest(req, res);
+      } else if (pathname === '/message' && req.method === 'POST') {
+        await this.handleMessage(req, res);
+      } else if (pathname === '/status' && req.method === 'GET') {
+        await this.handleStatus(req, res);
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not found' }));
+      }
+    } catch (error: any) {
+      console.error('❌ Route handling error:', error);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+      }
+      res.end(JSON.stringify({ error: error?.message || 'Internal server error' }));
     }
   }
 
@@ -148,23 +156,29 @@ export class AgentServer {
   /**
    * Status endpoint
    */
-  private handleStatus(_req: http.IncomingMessage, res: http.ServerResponse): void {
-    const balance = this.config.client.getBalance();
-    const reputation = this.config.client.getReputation();
-    const manifest = this.config.client.getManifest();
+  private async handleStatus(_req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+    try {
+      const balance = await this.config.client.getBalanceSafe();
+      const reputation = this.config.client.getReputation();
+      const manifest = this.config.client.getManifest();
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(
-      JSON.stringify({
-        agentId: this.config.agentId,
-        agentName: manifest?.agentName || 'Unknown',
-        capabilities: manifest?.capabilities.map((c) => c.name) || [],
-        balance: balance.available,
-        reputation: reputation.overallScore,
-        tier: reputation.tier,
-        uptime: process.uptime(),
-      })
-    );
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          agentId: this.config.agentId,
+          agentName: manifest?.agentName || 'Unknown',
+          capabilities: manifest?.capabilities.map((c) => c.name) || [],
+          balance: balance.available,
+          reputation: reputation.overallScore,
+          tier: reputation.tier,
+          uptime: process.uptime(),
+        })
+      );
+    } catch (error) {
+      console.error('❌ Status endpoint error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Failed to get agent status' }));
+    }
   }
 
   /**

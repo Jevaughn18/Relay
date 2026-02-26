@@ -30,6 +30,21 @@ export interface EscrowTransaction {
   reason?: string;
 }
 
+export interface EscrowPersistedState {
+  accounts: EscrowAccount[];
+  contractLocks: Array<
+    Omit<ContractEscrowLock, 'lockedAt' | 'releasedAt'> & {
+      lockedAt: string;
+      releasedAt?: string;
+    }
+  >;
+  transactions: Array<
+    Omit<EscrowTransaction, 'timestamp'> & {
+      timestamp: string;
+    }
+  >;
+}
+
 /**
  * Escrow manager for handling payments and stakes
  */
@@ -322,6 +337,50 @@ export class EscrowManager {
    */
   getAllTransactions(): EscrowTransaction[] {
     return [...this.transactions];
+  }
+
+  /**
+   * Export state for persistence
+   */
+  exportState(): EscrowPersistedState {
+    return {
+      accounts: Array.from(this.accounts.values()),
+      contractLocks: Array.from(this.contractLocks.values()).map((lock) => ({
+        ...lock,
+        lockedAt: lock.lockedAt.toISOString(),
+        releasedAt: lock.releasedAt?.toISOString(),
+      })),
+      transactions: this.transactions.map((tx) => ({
+        ...tx,
+        timestamp: tx.timestamp.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Import persisted state
+   */
+  importState(state: EscrowPersistedState): void {
+    this.accounts.clear();
+    this.contractLocks.clear();
+    this.transactions = [];
+
+    for (const account of state.accounts || []) {
+      this.accounts.set(account.agentId, { ...account });
+    }
+
+    for (const lock of state.contractLocks || []) {
+      this.contractLocks.set(lock.contractId, {
+        ...lock,
+        lockedAt: new Date(lock.lockedAt),
+        releasedAt: lock.releasedAt ? new Date(lock.releasedAt) : undefined,
+      });
+    }
+
+    this.transactions = (state.transactions || []).map((tx) => ({
+      ...tx,
+      timestamp: new Date(tx.timestamp),
+    }));
   }
 
   /**

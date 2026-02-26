@@ -8,7 +8,9 @@ import http from 'http';
 import { parse } from 'url';
 import { AgentRegistry, DiscoveryQuery } from './registry';
 import { FederatedRegistry } from './federated-registry';
-import { CapabilityManifest } from '../schemas/capability';
+import { CapabilityManifest, CapabilityManifestHelper } from '../schemas/capability';
+import { RelaySign } from '../crypto/signer';
+import { ReplayCache, RELAY_AUTH_HEADERS, verifySignedRequest } from '../network/request-auth';
 
 export interface RegistryServerConfig {
   port: number;
@@ -17,6 +19,7 @@ export interface RegistryServerConfig {
   peers?: string[]; // Optional peer registries for federation
   federationSyncIntervalMs?: number;
   federationRequestTimeoutMs?: number;
+  requireSignedRequests?: boolean;
 }
 
 /**
@@ -28,6 +31,8 @@ export class RegistryServer {
   private registry: AgentRegistry;
   private federatedRegistry?: FederatedRegistry;
   private staleCheckTimer?: NodeJS.Timeout;
+  private knownAgentKeys: Map<string, string> = new Map();
+  private replayCache = new ReplayCache();
 
   constructor(config: RegistryServerConfig) {
     this.config = config;
@@ -56,7 +61,10 @@ export class RegistryServer {
     // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      `Content-Type, ${RELAY_AUTH_HEADERS.agentId}, ${RELAY_AUTH_HEADERS.timestamp}, ${RELAY_AUTH_HEADERS.nonce}, ${RELAY_AUTH_HEADERS.signature}, ${RELAY_AUTH_HEADERS.publicKey}`
+    );
 
     if (req.method === 'OPTIONS') {
       res.writeHead(200);
@@ -103,8 +111,31 @@ export class RegistryServer {
         endpoint: string;
         manifest: CapabilityManifest;
       };
+      if (!data.manifest || data.manifest.agentId !== data.agentId) {
+        throw new Error('Manifest agentId must match request agentId');
+      }
+      const manifest = this.normalizeManifestDates(data.manifest);
 
-      this.registry.register(data.agentId, data.agentName, data.endpoint, data.manifest);
+      const existingKey = this.knownAgentKeys.get(data.agentId);
+      const auth = this.verifyAuth(req, '/register', body, data.agentId, existingKey);
+      if (!auth.ok) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: auth.error }));
+        return;
+      }
+
+      if (!data.manifest.signature) {
+        throw new Error('Manifest signature is required');
+      }
+      const manifestSignature = data.manifest.signature;
+      const signableManifest = new CapabilityManifestHelper(manifest).toSignable();
+      if (!RelaySign.verify(signableManifest, manifestSignature, auth.identity.publicKey)) {
+        throw new Error('Manifest signature verification failed');
+      }
+
+      this.knownAgentKeys.set(data.agentId, auth.identity.publicKey);
+
+      this.registry.register(data.agentId, data.agentName, data.endpoint, manifest);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
@@ -130,6 +161,18 @@ export class RegistryServer {
     try {
       const body = await this.readBody(req);
       const { agentId } = JSON.parse(body);
+      const auth = this.verifyAuth(
+        req,
+        '/unregister',
+        body,
+        agentId,
+        this.knownAgentKeys.get(agentId)
+      );
+      if (!auth.ok) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: auth.error }));
+        return;
+      }
 
       const success = this.registry.unregister(agentId);
 
@@ -195,6 +238,18 @@ export class RegistryServer {
     try {
       const body = await this.readBody(req);
       const { agentId } = JSON.parse(body);
+      const auth = this.verifyAuth(
+        req,
+        '/heartbeat',
+        body,
+        agentId,
+        this.knownAgentKeys.get(agentId)
+      );
+      if (!auth.ok) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: auth.error }));
+        return;
+      }
 
       const success = this.registry.heartbeat(agentId);
 
@@ -274,6 +329,43 @@ export class RegistryServer {
       req.on('end', () => resolve(body));
       req.on('error', reject);
     });
+  }
+
+  private verifyAuth(
+    req: http.IncomingMessage,
+    path: string,
+    rawBody: string,
+    expectedAgentId?: string,
+    expectedPublicKey?: string
+  ) {
+    if (this.config.requireSignedRequests === false) {
+      return {
+        ok: true as const,
+        identity: {
+          agentId: expectedAgentId || 'insecure',
+          publicKey: expectedPublicKey || 'insecure',
+          timestampMs: Date.now(),
+          nonce: 'insecure',
+        },
+      };
+    }
+
+    return verifySignedRequest({
+      req,
+      path,
+      rawBody,
+      expectedAgentId,
+      expectedPublicKey,
+      replayCache: this.replayCache,
+    });
+  }
+
+  private normalizeManifestDates(manifest: CapabilityManifest): CapabilityManifest {
+    return {
+      ...manifest,
+      createdAt: new Date(manifest.createdAt as unknown as string),
+      updatedAt: new Date(manifest.updatedAt as unknown as string),
+    };
   }
 
   /**

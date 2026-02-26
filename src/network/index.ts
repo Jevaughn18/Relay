@@ -13,3 +13,4 @@ export * from './a2a-relay-client';
 // HTTP communication
 export * from './agent-server';
 export * from './agent-client';
+export * from './request-auth';

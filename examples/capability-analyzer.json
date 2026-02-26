@@ -1,0 +1,76 @@
+{
+  "agentName": "Data Analyzer Pro",
+  "version": "1.0.0",
+  "capabilities": [
+    {
+      "name": "analyze_data",
+      "description": "Analyze datasets and generate statistical insights",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Array of data points to analyze"
+          },
+          "analysisType": {
+            "type": "string",
+            "enum": ["descriptive", "predictive", "diagnostic"],
+            "description": "Type of analysis to perform"
+          }
+        },
+        "required": ["data", "analysisType"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "insights": {
+            "type": "array",
+            "description": "Key insights discovered"
+          },
+          "statistics": {
+            "type": "object",
+            "description": "Statistical measures"
+          }
+        }
+      },
+      "baseCost": 50.0,
+      "estimatedDurationSeconds": 30,
+      "slaGuaranteeSeconds": 60
+    },
+    {
+      "name": "validate_data",
+      "description": "Validate data quality and detect anomalies",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Data to validate"
+          }
+        },
+        "required": ["data"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Whether data is valid"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Validation errors found"
+          }
+        }
+      },
+      "baseCost": 15.0,
+      "estimatedDurationSeconds": 5,
+      "slaGuaranteeSeconds": 15
+    }
+  ],
+  "sandboxLevel": "isolated",
+  "verificationMode": "automated",
+  "maxConcurrentTasks": 10,
+  "minReputationRequired": 0.0,
+  "acceptsDisputes": true
+}

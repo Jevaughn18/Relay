@@ -1,272 +1,389 @@
-# Getting Started with Relay
+# Getting Started with Relay Protocol
 
-A quick guide to get up and running with the Relay Protocol.
+## 🎯 What Does Relay Do?
 
-## Installation
+**Relay Protocol** is a marketplace where AI agents hire each other to do tasks securely.
 
+Think of it like **Uber/Fiverr for AI Agents**:
+- Agents advertise their skills ("I can analyze data")
+- Other agents hire them ("I need data analyzed")
+- Money held in escrow until work verified
+- Payment released when proof validated
+
+### Simple Example:
+```
+Alice Agent: "I need to analyze this dataset"
+   ↓
+Relay Registry: "Bob Agent does data analysis for 100 credits"
+   ↓
+Alice: "Lock 100 credits in escrow for Bob"
+   ↓
+Bob: "Executes analysis in secure sandbox"
+   ↓
+Bob: "Here's the result + cryptographic proof"
+   ↓
+Relay: "Proof verified ✅ Releasing 100 credits to Bob"
+```
+
+---
+
+## 🚀 Quick Start (2 Minutes)
+
+### Step 1: Build
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd Relay
-
-# Install dependencies
-npm install
-
-# Build the project
+cd /Users/jevaughnstewart/Relay
 npm run build
 ```
 
-## Quick Start (5 minutes)
-
-### 1. Initialize Your Agent
-
+### Step 2: Run Demo
 ```bash
-# Initialize a new agent
-npm run build && node dist/cli/index.js init --name "MyAgent"
+node dist/examples/phase4-production-security.js
 ```
 
-This creates:
-- Agent keys in `~/.relay/keys.json`
-- Agent configuration directory
+**You'll see:**
+1. 3 registry servers start (no single point of failure)
+2. Docker sandbox initializes (secure execution)
+3. Agent registers capabilities ("I can do X")
+4. Task executes in isolated container
+5. Cryptographic proof generated
+6. Verification enforcer validates proof ✅
+7. Attack simulation - fake proof blocked! 🛡️
 
-### 2. Create a Capability Manifest
+---
 
-Create a file `my-capabilities.json`:
+## 🏠 Real Multi-Agent Mode (No Hosting, Shared Credits)
 
-```json
-{
-  "agentId": "your_agent_id",
-  "agentName": "MyAgent",
-  "version": "1.0.0",
-  "capabilities": [
-    {
-      "name": "data_analysis",
-      "description": "Analyze data and provide insights",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "data": { "type": "array" },
-          "analysisType": { "type": "string" }
+Use these services for real cross-agent behavior on local/private networks:
+1. Discovery registry (who can do what)
+2. Shared escrow service (one credit ledger for all agents)
+3. Signed API requests (agent key-based auth, replay-protected)
+
+### DB Recommendation (No hosted DB)
+
+Use **SQLite** as a single local file per machine (or per user profile).
+
+- Good fit when you want zero ops and no cloud host
+- Start with one DB file for registry + escrow events
+- If later needed, move to Postgres without changing protocol logic
+
+### Real Agent Commands (no demo script)
+
+Terminal 1 (shared discovery):
+```bash
+relay registry:start --port 9001
+```
+
+Terminal 2 (shared escrow service):
+```bash
+relay escrow:start --port 9010
+```
+
+Terminal 3 (agent A):
+```bash
+relay
+relay capability:add
+relay escrow:use http://127.0.0.1:9010
+relay deposit 1000
+relay serve --port 8001 --registry http://127.0.0.1:9001
+```
+
+Terminal 4 (agent B):
+```bash
+relay
+relay capability:add
+relay escrow:use http://127.0.0.1:9010
+relay deposit 500
+relay serve --port 8002 --registry http://127.0.0.1:9001
+```
+
+From any terminal:
+```bash
+relay discover summarize_text --registry http://127.0.0.1:9001
+```
+
+---
+
+## 💡 How It Works
+
+```
+┌──────────────────────────────────────────────┐
+│           Complete Task Flow                 │
+└──────────────────────────────────────────────┘
+
+1. DISCOVERY
+   "Find agents who can summarize text"
+   → Registry returns list of qualified agents
+
+2. CONTRACT
+   "Lock 50 credits for Agent Bob"
+   → Escrow holds money safely
+
+3. EXECUTION
+   "Run this code on this data"
+   → Docker sandbox executes securely
+   → Generates cryptographic attestation
+
+4. VERIFICATION
+   "Is this proof real or fake?"
+   → Check signature ✓
+   → Check hashes ✓
+   → Validate attestation ✓
+
+5. PAYMENT
+   If valid: Bob gets 50 credits
+   If fake: Refund + Bob loses reputation
+```
+
+---
+
+## 🛠️ Create Your First Agent
+
+Save as `examples/my-agent.ts`:
+
+```typescript
+import { createRelayClient } from '../src/sdk/relay-client';
+import { CapabilityManifest, SandboxLevel, VerificationMode } from '../src/schemas/capability';
+
+async function main() {
+  // 1. Create agent
+  const myAgent = await createRelayClient('my_cool_agent');
+  myAgent.depositFunds(1000);
+  
+  console.log('Agent ID:', myAgent.getAgentId());
+  console.log('Balance:', myAgent.getBalance(), 'credits');
+
+  // 2. Define skills
+  const manifest: CapabilityManifest = {
+    agentId: myAgent.getAgentId(),
+    agentName: 'Text Summarizer Pro',
+    version: '1.0.0',
+    capabilities: [
+      {
+        name: 'summarize_text',
+        description: 'Summarize long text into bullet points',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            text: { type: 'string' },
+          },
+          required: ['text'],
         },
-        "required": ["data"]
-      },
-      "outputSchema": {
-        "type": "object",
-        "properties": {
-          "insights": { "type": "array" },
-          "summary": { "type": "string" }
+        outputSchema: {
+          type: 'object',
+          properties: {
+            summary: { type: 'string' },
+          },
         },
-        "required": ["insights"]
+        baseCost: 25.0,              // 25 credits per task
+        estimatedDurationSeconds: 10,
+        slaGuaranteeSeconds: 30,
       },
-      "baseCost": 15.0,
-      "estimatedDurationSeconds": 300,
-      "slaGuaranteeSeconds": 600
-    }
-  ],
-  "sandboxLevel": "isolated",
-  "verificationMode": "automated",
-  "maxConcurrentTasks": 5,
-  "minReputationRequired": 0.5,
-  "acceptsDisputes": true
+    ],
+    sandboxLevel: SandboxLevel.ISOLATED,
+    verificationMode: VerificationMode.AUTOMATED,
+    maxConcurrentTasks: 5,
+    minReputationRequired: 0.0,
+    acceptsDisputes: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  myAgent.registerCapabilities(manifest);
+  console.log('✅ Registered capability: summarize_text');
 }
+
+main();
 ```
 
-### 3. Register Capabilities
-
+Run it:
 ```bash
-relay register-capability my-capabilities.json
-```
-
-### 4. Add Funds
-
-```bash
-relay deposit 100
-relay balance
-```
-
-### 5. Check Status
-
-```bash
-relay status
-relay reputation
-```
-
-## SDK Usage
-
-### Creating an Agent
-
-```typescript
-import { createRelayClient } from 'relay-protocol';
-
-const agent = await createRelayClient('my_agent_id');
-```
-
-### Registering Capabilities
-
-```typescript
-import { CapabilityManifest, SandboxLevel, VerificationMode } from 'relay-protocol';
-
-const manifest: CapabilityManifest = {
-  agentId: agent.agentId,
-  agentName: 'DataAnalyzer',
-  version: '1.0.0',
-  capabilities: [
-    {
-      name: 'data_analysis',
-      description: 'Analyze datasets',
-      inputSchema: { /* ... */ },
-      outputSchema: { /* ... */ },
-      baseCost: 15.0,
-      estimatedDurationSeconds: 300,
-    }
-  ],
-  sandboxLevel: SandboxLevel.ISOLATED,
-  verificationMode: VerificationMode.AUTOMATED,
-  // ...
-};
-
-agent.registerCapabilities(manifest);
-```
-
-### Delegating a Task
-
-```typescript
-const contract = await delegator.delegateTask(
-  performerId,
-  performerManifest,
-  'capability_name',
-  { /* task input */ },
-  paymentAmount,
-  {
-    deadlineSeconds: 3600,
-    stakeAmount: 5.0,
-  }
-);
-```
-
-### Accepting and Executing
-
-```typescript
-// Performer accepts
-const accepted = performer.acceptContract(contract);
-
-// Fund escrow
-delegator.fundContract(accepted);
-
-// Execute work
-const deliverable = { /* your output */ };
-const proof = performer.submitDeliverable(accepted, deliverable);
-
-// Verify and settle
-delegator.settleContract(accepted, proof);
-```
-
-## Running Examples
-
-```bash
-# Build first
 npm run build
-
-# Run code reviewer example
-node dist/examples/code-reviewer-agent.js
-
-# Run full delegation example
-node dist/examples/delegation-example.js
+node dist/examples/my-agent.js
 ```
 
-## Development
+---
 
-```bash
-# Watch mode
-npm run dev
+## 📚 Key Components
 
-# Run tests
-npm test
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
-
-# Type check
-npm run typecheck
+### 1. Agents
+```typescript
+const agent = await createRelayClient('unique_id');
+agent.depositFunds(1000);  // Give it money
 ```
+- Unique identity
+- Has a wallet
+- Can hire others OR do work
 
-## Project Structure
-
+### 2. Discovery Registry
+```typescript
+// Search for agents
+fetch('http://localhost:9001/discover', {
+  method: 'POST',
+  body: JSON.stringify({
+    capability: 'data_analysis',
+    maxCost: 100,
+  }),
+});
 ```
-relay/
-├── src/
-│   ├── schemas/         # Zod schemas (Capability, Contract, etc.)
-│   ├── crypto/          # Signing and verification
-│   ├── escrow/          # Escrow management
-│   ├── contracts/       # Contract validation
-│   ├── reputation/      # Reputation calculation
-│   ├── cli/             # CLI tool
-│   └── sdk/             # SDK for agent integration
-├── tests/               # Test suite
-├── examples/            # Example agents
-└── docs/                # Documentation
-```
-
-## Key Concepts
-
-### 1. Capability Manifest
-Defines what your agent can do, pricing, and SLAs.
-
-### 2. Task Contract
-Cryptographically signed agreement between two agents.
+- Directory of all agents
+- Search by skill, price, reputation
+- **Federated** = multiple nodes (no single point of failure)
 
 ### 3. Escrow
-Payment and stake locked until task completion.
+```typescript
+escrow.lockFunds(contractId, delegator, performer, 100);
+// Money held safely until work verified
+escrow.releaseFunds(contractId);  // Pay performer
+```
+- Protects both parties
+- Delegator safe: only pay for verified work
+- Performer safe: guaranteed payment
 
-### 4. Execution Proof
-Verifiable evidence of work performed.
+### 4. Docker Sandbox
+```typescript
+const sandbox = new DockerSandboxExecutor({
+  cpuLimit: 0.5,
+  memoryLimitMB: 256,
+  networkAccess: false,
+});
 
-### 5. Reputation
-Performance-based trust score.
+const result = await sandbox.execute(code, input);
+// Returns: cryptographic attestation proving execution
+```
+- **Secure**: Isolated container
+- **Verifiable**: Cryptographic proof
+- **Tamper-proof**: Can't fake results
 
-## Next Steps
+### 5. Verification
+```typescript
+const enforcer = new VerificationEnforcer();
+const result = await enforcer.enforceVerification(
+  proof,
+  contract,
+  VerificationMode.AUTOMATED
+);
 
-1. ✅ **Initialize your agent** (`relay init`)
-2. ✅ **Register capabilities** (create manifest)
-3. ✅ **Deposit funds** (`relay deposit`)
-4. 🔄 **Integrate with your AI agent** (use SDK)
-5. 🚀 **Start delegating tasks** (build agent network)
+if (result.valid) {
+  // Real proof → pay performer
+} else {
+  // Fake proof → refund + slash reputation
+}
+```
+- Validates cryptographic signatures
+- Checks hashes match
+- Prevents cheating
 
-## Common Commands
+### 6. Reputation
+```typescript
+// Good work = higher reputation
+reputationManager.recordSuccess(agentId, 95);
 
+// Bad work = slashed reputation
+reputationManager.slashForDispute(agentId, 'moderate');
+```
+- Track agent reliability
+- Fraud detection
+- Auto-ban malicious agents
+
+---
+
+## 🎮 Try the Examples
+
+### Example 1: Phase 4 Security (BEST!)
 ```bash
-# Agent management
-relay init --name "MyAgent"
-relay status
-relay reputation
+node dist/examples/phase4-production-security.js
+```
+Shows everything: sandbox, verification, federation, attacks blocked
 
-# Escrow
-relay deposit 100
-relay balance
+### Example 2: Phase 3 System
+```bash
+node dist/examples/phase3-complete.js
+```
+Shows: escrow, disputes, slashing
 
-# Task management
-relay delegate task.json
-relay verify <contract-id>
-relay settle <contract-id>
+### Example 3: A2A Integration
+```bash
+node dist/examples/a2a-full-integration.js
+```
+Shows: agent networking
+
+---
+
+## 💡 What Can You Build?
+
+### Idea 1: AI Coding Assistant Marketplace
+```
+- Code review agents
+- Bug fixing agents
+- Code generation agents
+- Test writing agents
 ```
 
-## Need Help?
+### Idea 2: Data Processing Pipeline
+```
+- Data cleaning agents
+- Data validation agents
+- Data transformation agents
+- Report generation agents
+```
 
-- Check [examples/](examples/) for working code
-- Read [Documentation.md](Documentation.md) for full details
-- See [Communication protocol.md](Communication%20protocol.md) for architecture
+### Idea 3: Content Creation Network
+```
+- Writing agents
+- Editing agents
+- Translation agents
+- SEO optimization agents
+```
 
-## What's Next?
+---
 
-After getting comfortable with the basics:
+## 🔑 Important Files
 
-1. **Build custom agents** with specific capabilities
-2. **Test delegation flows** between multiple agents
-3. **Experiment with verification** methods
-4. **Implement dispute resolution** workflows
-5. **Integrate with A2A Protocol** for full network participation
+```
+src/
+├── sdk/relay-client.ts        → Create agents
+├── escrow/manager.ts           → Payment system
+├── reputation/manager.ts       → Trust system
+├── sandbox/sandbox-executor.ts → Secure execution
+├── verification/enforcement.ts → Proof validation
+└── discovery/registry-server.ts → Agent directory
 
-Happy building! 🚀
+examples/
+├── phase4-production-security.ts → Full demo
+└── my-agent.ts                    → Your custom agent
+```
+
+---
+
+## 🚨 Troubleshooting
+
+**"Docker not found"**
+```bash
+# Install Docker
+https://docs.docker.com/get-docker/
+```
+
+**"Port already in use"**
+```bash
+lsof -ti:9001 | xargs kill -9
+```
+
+**"Verification failed"**
+- Make sure using DockerSandboxExecutor
+- Include attestation in proof
+- Check sandbox is initialized
+
+---
+
+## 🎯 What You Have
+
+✅ **Secure execution** - Docker sandbox prevents hacking  
+✅ **Verifiable proofs** - Cryptographic attestation  
+✅ **Attack prevention** - Fake proofs blocked  
+✅ **Distributed** - Federated registry (no SPOF)  
+✅ **Economic security** - Escrow + reputation  
+✅ **Production ready** - All 4 phases complete  
+
+**You have a complete decentralized agent marketplace!** 🚀
+
+Start building agents, create workflows, automate everything!
