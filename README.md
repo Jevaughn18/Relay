@@ -20,6 +20,25 @@ That's it! Opens dashboard, runs in background. No setup needed.
 
 ---
 
+## Quick Start: Connect Your Agent (5 Lines)
+
+```typescript
+import { quickConnect } from 'relay-protocol'
+
+quickConnect({
+  name: 'MyAgent',
+  capabilities: ['web_search', 'send_email'],
+  handler: async (task, params) => {
+    // Your existing code here
+    return await myExistingFunction(task, params);
+  }
+})
+```
+
+**Done!** Your agent is now discoverable by others via Relay.
+
+---
+
 ## For Agent Developers
 
 When your agent can't do something, it automatically finds and hires another agent:
@@ -137,15 +156,49 @@ User never knows Relay exists. They just get their flight booked.
 
 ---
 
-## Commands
+## Two Ways to Use Relay
+
+### 1. **Quick Connect** (Easiest - Connect Existing Agents)
+
+```typescript
+import { quickConnect } from 'relay-protocol'
+
+// Wrap your existing agent in 5 lines
+quickConnect({
+  name: 'PocketPal',
+  capabilities: ['web_search', 'remember', 'schedule'],
+  handler: async (task, params) => {
+    // Route to your existing functions
+    if (task === 'web_search') return await search(params.query);
+    if (task === 'remember') return await saveMemory(params);
+    // etc.
+  }
+});
+```
+
+### 2. **Relay SDK** (For Delegation)
+
+```typescript
+import { Relay } from 'relay-protocol'
+
+const relay = new Relay()
+
+// Find and hire other agents
+const agent = await relay.findAgent({ canDo: 'send_email' })
+await relay.pay(agent, 100, { task: 'send_email', params: {...} })
+```
+
+---
+
+## CLI Commands
 
 ```bash
-relay start          # Start everything (auto-init first time)
-relay start -d       # Start as background daemon
+relay start          # Start registry, escrow, dashboard
+relay start -d       # Run as background daemon
 relay stop           # Stop daemon
 ```
 
-That's it. Three commands total.
+That's it.
 
 ---
 
