@@ -89,16 +89,33 @@ async function autoInit(): Promise<void> {
 }
 
 /**
- * Open dashboard in browser
+ * Wait for dashboard to be ready, then open in browser
  */
-function openDashboard(port: number = 8787): void {
+async function openDashboard(port: number = 8787): Promise<void> {
   const url = `http://127.0.0.1:${port}`;
-  const start = process.platform === 'darwin' ? 'open' :
-                process.platform === 'win32' ? 'start' : 'xdg-open';
+  const maxAttempts = 30; // 30 seconds max
 
-  setTimeout(() => {
-    spawn(start, [url], { detached: true, stdio: 'ignore' }).unref();
-  }, 2000); // Wait 2s for server to start
+  // Poll until dashboard responds
+  for (let i = 0; i < maxAttempts; i++) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        // Dashboard is ready, open browser
+        const start = process.platform === 'darwin' ? 'open' :
+                      process.platform === 'win32' ? 'start' : 'xdg-open';
+        spawn(start, [url], { detached: true, stdio: 'ignore' }).unref();
+        return;
+      }
+    } catch {
+      // Server not ready yet
+    }
+
+    // Wait 1 second before next attempt
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  // Timeout - server didn't start
+  console.log(chalk.yellow('⚠ Dashboard took too long to start. Open manually: ' + url));
 }
 
 /**
@@ -137,17 +154,20 @@ program
         stackProcess.unref();
         process.exit(0);
       } else {
-        // Open dashboard
-        openDashboard();
-
         console.log(chalk.green('✓ Stack running'));
         console.log('');
         console.log(chalk.dim('  Registry:  http://127.0.0.1:9001'));
         console.log(chalk.dim('  Escrow:    http://127.0.0.1:9010'));
         console.log(chalk.dim('  Dashboard: http://127.0.0.1:8787'));
         console.log('');
-        console.log(chalk.cyan('  Opening dashboard...'));
+        console.log(chalk.cyan('  Waiting for dashboard to be ready...'));
         console.log('');
+
+        // Open dashboard in background (don't block)
+        openDashboard().then(() => {
+          console.log(chalk.green('  ✓ Dashboard opened in browser'));
+        });
+
         console.log(chalk.dim('  Press Ctrl+C to stop'));
         console.log('');
 
