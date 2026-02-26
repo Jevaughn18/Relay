@@ -1,0 +1,50 @@
+# Source files (only ship compiled code)
+src/
+tsconfig.json
+*.ts
+!*.d.ts
+
+# Development
+node_modules/
+.git/
+.gitignore
+.vscode/
+.DS_Store
+
+# Examples and docs (keep README, exclude others)
+examples/
+examples-draft/
+docs/
+*.md
+!README.md
+!README-new.md
+
+# Tests
+test/
+*.test.ts
+*.spec.ts
+jest.config.js
+
+# Build artifacts
+*.log
+npm-debug.log*
+.npm/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Scripts (for development only)
+scripts/postinstall.js
+relay-cli.sh
+test-agent.sh
+
+# Linting
+.eslintrc.json
+.prettierrc
+
+# Old files
+*-old.*
+*-complex.*
+*.bak
