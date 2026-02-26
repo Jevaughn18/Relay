@@ -6,8 +6,9 @@
 
 import { TaskContract, ContractStatus, TaskContractHelper } from '../schemas/contract';
 import { CapabilityManifest, Capability } from '../schemas/capability';
-import { ExecutionProof } from '../schemas/execution';
+import { ExecutionProof, ExecutionProofHelper } from '../schemas/execution';
 import { RelaySign } from '../crypto/signer';
+import { SandboxExecutor } from '../sandbox/sandbox-executor';
 import Ajv from 'ajv';
 
 const ajv = new Ajv();
@@ -266,6 +267,12 @@ export class ContractValidator {
       errors.push('Deliverable hash mismatch');
     }
 
+    // Validate input hash
+    const calculatedInputHash = RelaySign.hash(contract.taskInput);
+    if (proof.inputHash !== calculatedInputHash) {
+      errors.push('Input hash mismatch');
+    }
+
     // Validate deliverable against schema
     const deliverableValidation = this.validateDeliverable(
       proof.deliverable,
@@ -273,6 +280,61 @@ export class ContractValidator {
     );
     if (!deliverableValidation.valid) {
       errors.push(...deliverableValidation.errors.map((e) => `Deliverable: ${e}`));
+    }
+
+    // Enforce explicit verification rules
+    for (const rule of contract.verificationRules.filter((r) => r.required)) {
+      switch (rule.type) {
+        case 'hash':
+          if (proof.outputHash !== calculatedHash || proof.inputHash !== calculatedInputHash) {
+            errors.push('Required hash verification failed');
+          }
+          break;
+        case 'signature': {
+          if (!proof.signature) {
+            errors.push('Required proof signature is missing');
+            break;
+          }
+
+          const publicKey = proof.metadata?.performerPublicKey;
+          if (typeof publicKey !== 'string' || publicKey.length === 0) {
+            errors.push('Required performer public key missing for proof signature verification');
+            break;
+          }
+
+          const signableData = new ExecutionProofHelper(proof).toSignable();
+          if (!RelaySign.verify(signableData, proof.signature, publicKey)) {
+            errors.push('Required proof signature verification failed');
+          }
+          break;
+        }
+        case 'attestation': {
+          if (!proof.sandboxAttestation) {
+            errors.push('Required sandbox attestation is missing');
+            break;
+          }
+
+          const executedCode = proof.metadata?.executedCode;
+          if (typeof executedCode !== 'string' || executedCode.length === 0) {
+            errors.push('Required executed code is missing for sandbox attestation verification');
+            break;
+          }
+
+          const validAttestation = SandboxExecutor.verifyAttestation(
+            proof.sandboxAttestation,
+            executedCode,
+            contract.taskInput,
+            proof.deliverable
+          );
+
+          if (!validAttestation) {
+            errors.push('Required sandbox attestation verification failed');
+          }
+          break;
+        }
+        default:
+          break;
+      }
     }
 
     return {

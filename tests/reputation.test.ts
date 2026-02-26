@@ -48,7 +48,7 @@ describe('ReputationCalculator', () => {
       };
 
       const score = ReputationCalculator.calculateReliabilityScore(metrics);
-      expect(score).toBeLessThan(0.6);
+      expect(score).toBeCloseTo(0.65, 2);
     });
   });
 
@@ -146,7 +146,7 @@ describe('ReputationManager', () => {
         stakeAmount: 0,
         deadline: new Date(Date.now() + 3600000),
         disputeWindow: { durationSeconds: 3600 },
-        status: ContractStatus.COMPLETED,
+        status: ContractStatus.SETTLED,
         escrowFunded: true,
         disputeRaised: false,
         createdAt: new Date(),

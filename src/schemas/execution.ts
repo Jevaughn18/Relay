@@ -28,6 +28,47 @@ export const ToolLogSchema = z.object({
 export type ToolLog = z.infer<typeof ToolLogSchema>;
 
 /**
+ * Sandbox attestation schema
+ */
+export const SandboxAttestationSchema = z.object({
+  sandboxId: z.string().min(1),
+  executionId: z.string().min(1),
+  timestamp: z.date(),
+  codeHash: z.string().min(1),
+  inputHash: z.string().min(1),
+  outputHash: z.string().min(1),
+  environmentSignature: z.string().min(1),
+  providerPublicKey: z.string().min(1),
+  resourceUsage: z.object({
+    cpuPercent: z.number().nonnegative(),
+    memoryMB: z.number().nonnegative(),
+    durationMs: z.number().int().nonnegative(),
+    networkBytesIn: z.number().int().nonnegative().optional(),
+    networkBytesOut: z.number().int().nonnegative().optional(),
+    diskReadMB: z.number().nonnegative().optional(),
+    diskWriteMB: z.number().nonnegative().optional(),
+  }),
+  sandboxType: z.enum(['docker', 'vm', 'wasm', 'native']),
+});
+
+export type SandboxAttestationProof = z.infer<typeof SandboxAttestationSchema>;
+
+/**
+ * Third-party verification attestation
+ */
+export const VerificationAttestationSchema = z.object({
+  verifierId: z.string().min(1),
+  mode: z.enum(['manual', 'agent']),
+  verdict: z.enum(['approved', 'rejected']),
+  reason: z.string().optional(),
+  verifiedAt: z.date().default(() => new Date()),
+  signature: z.string().optional(),
+  metadata: z.record(z.any()).default({}),
+});
+
+export type VerificationAttestation = z.infer<typeof VerificationAttestationSchema>;
+
+/**
  * Execution proof schema
  *
  * Provides verifiable evidence of task execution.
@@ -56,6 +97,17 @@ export const ExecutionProofSchema = z.object({
 
   // Deliverable
   deliverable: z.record(z.any()).describe('Actual work output'),
+
+  // Trusted execution
+  sandboxAttestation: SandboxAttestationSchema
+    .optional()
+    .describe('Cryptographic proof from trusted sandbox'),
+
+  // Third-party verification
+  verificationAttestations: z
+    .array(VerificationAttestationSchema)
+    .optional()
+    .describe('Independent verifier attestations'),
 
   // Verification
   verified: z.boolean().default(false).describe('Whether proof has been verified'),
@@ -128,6 +180,16 @@ export class ExecutionProofHelper {
       ...rest,
       startedAt: this.proof.startedAt.toISOString(),
       completedAt: this.proof.completedAt.toISOString(),
+      sandboxAttestation: this.proof.sandboxAttestation
+        ? {
+            ...this.proof.sandboxAttestation,
+            timestamp: this.proof.sandboxAttestation.timestamp.toISOString(),
+          }
+        : undefined,
+      verificationAttestations: (this.proof.verificationAttestations || []).map((attestation) => ({
+        ...attestation,
+        verifiedAt: attestation.verifiedAt.toISOString(),
+      })),
       toolLogs: this.proof.toolLogs.map((log) => ({
         ...log,
         timestamp: log.timestamp.toISOString(),
@@ -171,6 +233,7 @@ export const exampleExecutionProof: ExecutionProof = {
     ],
     score: 7.5,
   },
+  verificationAttestations: [],
   verified: false,
   metadata: {},
 };

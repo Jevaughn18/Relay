@@ -8,19 +8,23 @@ import {
   CapabilityManifest,
   CapabilityManifestHelper,
   CapabilityManifestSchema,
+  VerificationMode,
 } from '../schemas/capability';
 import {
   TaskContract,
   TaskContractSchema,
   ContractStatus,
   TaskContractHelper,
+  VerificationRule,
 } from '../schemas/contract';
 import { ExecutionProof, ExecutionProofHelper } from '../schemas/execution';
 import { ReputationScore } from '../schemas/reputation';
 import { RelaySign, KeyManager, KeyPair } from '../crypto/signer';
 import { ContractValidator } from '../contracts/validator';
+import { ExecutionVerifier } from '../contracts/execution-verifier';
 import { EscrowManager } from '../escrow/escrow';
 import { ReputationManager } from '../reputation/manager';
+import { SandboxExecutionResult, SandboxExecutor } from '../sandbox/sandbox-executor';
 
 /**
  * Relay client configuration
@@ -29,6 +33,12 @@ export interface RelayClientConfig {
   agentId: string;
   keyPair?: KeyPair;
   autoGenerateKeys?: boolean;
+}
+
+export interface SubmitDeliverableOptions {
+  executedCode?: string;
+  sandboxExecution?: SandboxExecutionResult;
+  executionTrace?: string[];
 }
 
 /**
@@ -141,6 +151,40 @@ export class RelayClient {
     const deadlineSeconds = options?.deadlineSeconds || capability.slaGuaranteeSeconds || 3600;
     const deadline = new Date(Date.now() + deadlineSeconds * 1000);
 
+    const verificationRules: VerificationRule[] = [
+      {
+        type: 'schema',
+        criteria: { schema: capability.outputSchema },
+        required: true,
+      },
+      {
+        type: 'hash',
+        criteria: {},
+        required: true,
+      },
+      {
+        type: 'signature',
+        criteria: {},
+        required: true,
+      },
+      {
+        type: 'attestation',
+        criteria: {},
+        required: true,
+      },
+    ];
+
+    if (performerManifest.verificationMode === VerificationMode.AUTOMATED) {
+      verificationRules.push({ type: 'automated', criteria: {}, required: true });
+    } else if (performerManifest.verificationMode === VerificationMode.MANUAL) {
+      verificationRules.push({ type: 'manual', criteria: {}, required: true });
+    } else if (performerManifest.verificationMode === VerificationMode.AGENT) {
+      verificationRules.push({ type: 'agent', criteria: {}, required: true });
+    } else {
+      verificationRules.push({ type: 'automated', criteria: {}, required: true });
+      verificationRules.push({ type: 'agent', criteria: {}, required: true });
+    }
+
     const contract: TaskContract = {
       contractId: crypto.randomUUID(),
       version: '1.0.0',
@@ -160,14 +204,11 @@ export class RelayClient {
       escrowFunded: false,
       disputeRaised: false,
       createdAt: new Date(),
-      metadata: {},
-      verificationRules: [
-        {
-          type: 'schema',
-          criteria: { schema: capability.outputSchema },
-          required: true,
-        },
-      ],
+      metadata: {
+        verificationMode: performerManifest.verificationMode,
+        performerSandboxLevel: performerManifest.sandboxLevel,
+      },
+      verificationRules,
       slashingConditions: [],
     };
 
@@ -238,11 +279,24 @@ export class RelayClient {
   }
 
   /**
+   * Execute task code in a configured sandbox.
+   */
+  async executeInSandbox(
+    executor: SandboxExecutor,
+    code: string,
+    input: Record<string, unknown>
+  ): Promise<SandboxExecutionResult> {
+    await executor.initialize();
+    return executor.execute(code, input);
+  }
+
+  /**
    * Submit task deliverable
    */
   submitDeliverable(
     contract: TaskContract,
-    deliverable: Record<string, unknown>
+    deliverable: Record<string, unknown>,
+    options?: SubmitDeliverableOptions
   ): ExecutionProof {
     if (contract.performerId !== this.agentId) {
       throw new Error('Only performer can submit deliverable');
@@ -267,13 +321,35 @@ export class RelayClient {
         ? (new Date().getTime() - contract.startedAt.getTime()) / 1000
         : 0,
       toolLogs: [],
-      executionTrace: [],
+      executionTrace: options?.executionTrace || [],
       inputHash: RelaySign.hash(contract.taskInput),
       outputHash: RelaySign.hash(deliverable),
       deliverable,
+      sandboxAttestation: options?.sandboxExecution?.attestation,
+      verificationAttestations: [],
       verified: false,
-      metadata: {},
+      metadata: {
+        performerPublicKey: this.keyManager.getPublicKey(this.agentId),
+        executedCode: options?.executedCode,
+      },
     };
+
+    if (options?.sandboxExecution) {
+      const sandboxExecution = options.sandboxExecution;
+      proof.toolLogs = sandboxExecution.logs.map((log, index) => ({
+        toolName: 'sandbox_executor',
+        timestamp: new Date(),
+        input: { index },
+        output: { log },
+        durationMs: sandboxExecution.attestation.resourceUsage.durationMs,
+        success: sandboxExecution.success,
+        error: sandboxExecution.error,
+      }));
+      proof.executionTrace = [
+        ...proof.executionTrace,
+        `Sandbox execution completed in ${sandboxExecution.attestation.resourceUsage.durationMs}ms`,
+      ];
+    }
 
     // Sign proof
     const privateKey = this.keyManager.getPrivateKey(this.agentId);
@@ -302,8 +378,17 @@ export class RelayClient {
       throw new Error(`Proof validation failed: ${validation.errors.join(', ')}`);
     }
 
+    // Enforce verification mode policy
+    const verificationEnforcement = ExecutionVerifier.enforce(contract, proof);
+    if (!verificationEnforcement.valid) {
+      throw new Error(
+        `Verification enforcement failed: ${verificationEnforcement.errors.join(', ')}`
+      );
+    }
+
     // Mark as verified
     proof.verified = true;
+    proof.verifiedBy = this.agentId;
     proof.verifiedAt = new Date();
     contract.status = ContractStatus.VERIFIED;
 
@@ -316,7 +401,7 @@ export class RelayClient {
       contract.performerId,
       contract,
       proof,
-      0.9 // Example verification score
+      verificationEnforcement.verificationScore
     );
   }
 

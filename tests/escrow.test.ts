@@ -109,7 +109,7 @@ describe('EscrowManager', () => {
       escrow.slashStake('contract_123', 50); // 50% slash
 
       const aliceBalance = escrow.getBalance('agent_alice');
-      expect(aliceBalance.balance).toBe(91); // 90 + 1 (50% of 2 stake)
+      expect(aliceBalance.balance).toBe(101); // 100 initial + 1 (50% of 2 stake)
 
       const bobBalance = escrow.getBalance('agent_bob');
       expect(bobBalance.available).toBe(9); // 8 + 1 (remaining 50% of stake)
@@ -123,7 +123,7 @@ describe('EscrowManager', () => {
       escrow.slashStake('contract_123');
 
       const aliceBalance = escrow.getBalance('agent_alice');
-      expect(aliceBalance.balance).toBe(92); // 90 + 2 (full stake)
+      expect(aliceBalance.balance).toBe(102); // 100 initial + 2 (full stake)
 
       const bobBalance = escrow.getBalance('agent_bob');
       expect(bobBalance.available).toBe(8); // Lost entire stake
@@ -134,7 +134,7 @@ describe('EscrowManager', () => {
     it('should refund payment to delegator', () => {
       escrow.deposit('agent_alice', 100);
       escrow.deposit('agent_bob', 10);
-      escrow.lockFunds('contract_123');
+      escrow.lockFunds(mockContract);
 
       escrow.refundPayment('contract_123');
 

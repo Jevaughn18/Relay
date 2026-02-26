@@ -27,7 +27,9 @@ export enum ContractStatus {
  * Verification rule schema
  */
 export const VerificationRuleSchema = z.object({
-  type: z.enum(['schema', 'agent', 'manual', 'automated', 'hash', 'signature']).describe('Verification type'),
+  type: z
+    .enum(['schema', 'agent', 'manual', 'automated', 'hash', 'signature', 'attestation'])
+    .describe('Verification type'),
 
   criteria: z.record(z.any()).describe('Verification criteria/parameters'),
 
