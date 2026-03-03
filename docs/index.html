@@ -4,428 +4,342 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Relay - Local-First AI Agent Infrastructure</title>
-  <meta name="description" content="Payment & orchestration for AI agents. Runs locally. No cloud required.">
+  <meta name="description" content="Payment infrastructure for AI agents. Runs locally. No cloud required.">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-      50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
-    }
-    @keyframes slide-up {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes gradient-shift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .float-animation { animation: float 6s ease-in-out infinite; }
-    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-    .slide-up { animation: slide-up 0.6s ease-out forwards; }
-    .gradient-bg {
-      background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #533483);
-      background-size: 400% 400%;
-      animation: gradient-shift 15s ease infinite;
-    }
-    .glass {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .gradient-text {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+
+    .gradient-accent {
+      background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .code-block {
-      background: linear-gradient(145deg, #1a1a2e, #0a0a15);
-      border: 1px solid rgba(102, 126, 234, 0.3);
-    }
-    .feature-card {
+
+    .btn-primary {
+      background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
       transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
     }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-      transform: scale(0);
-      transition: transform 0.5s ease;
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(168, 255, 120, 0.3);
     }
-    .feature-card:hover::before {
-      transform: scale(1);
+
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
     }
+
+    .feature-card {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      transition: all 0.3s ease;
+    }
+
     .feature-card:hover {
-      transform: translateY(-8px);
-      border-color: rgba(102, 126, 234, 0.5);
-    }
-    .neon-button {
-      position: relative;
-      overflow: hidden;
-    }
-    .neon-button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s;
-    }
-    .neon-button:hover::before {
-      left: 100%;
+      border-color: #2a2a2a;
+      transform: translateY(-4px);
     }
   </style>
 </head>
-<body class="gradient-bg text-white min-h-screen overflow-x-hidden">
+<body class="bg-black text-white antialiased">
 
-  <!-- Animated Background Particles -->
-  <div class="fixed inset-0 overflow-hidden pointer-events-none opacity-30">
-    <div class="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-20 -top-48 -left-48 float-animation"></div>
-    <div class="absolute w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-20 top-1/3 -right-48 float-animation" style="animation-delay: 2s"></div>
-    <div class="absolute w-96 h-96 bg-pink-500 rounded-full blur-3xl opacity-20 -bottom-48 left-1/3 float-animation" style="animation-delay: 4s"></div>
-  </div>
-
-  <div class="relative z-10">
-    <!-- Hero Section -->
-    <div class="container mx-auto px-4 py-20">
-      <!-- Nav -->
-      <nav class="flex items-center justify-between mb-20 glass rounded-2xl px-8 py-4">
-        <div class="flex items-center gap-3">
-          <div class="text-4xl pulse-glow">🔷</div>
-          <div class="text-2xl font-bold">Relay Protocol</div>
+  <!-- Navigation -->
+  <nav class="border-b border-gray-900">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-12">
+          <div class="text-xl font-bold">Relay</div>
+          <div class="hidden md:flex items-center gap-8 text-sm text-gray-400">
+            <a href="#features" class="hover:text-white transition-colors">Features</a>
+            <a href="#quickstart" class="hover:text-white transition-colors">Quick Start</a>
+            <a href="#examples" class="hover:text-white transition-colors">Examples</a>
+            <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="hover:text-white transition-colors">Documentation</a>
+          </div>
         </div>
-        <div class="flex items-center gap-6">
-          <a href="#features" class="hover:text-blue-400 transition-all hover:scale-110">Features</a>
-          <a href="#docs" class="hover:text-purple-400 transition-all hover:scale-110">Docs</a>
-          <a href="#examples" class="hover:text-pink-400 transition-all hover:scale-110">Examples</a>
-          <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="neon-button flex items-center gap-2 px-6 py-3 glass rounded-xl hover:bg-white/10 transition-all">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-            GitHub
-          </a>
-        </div>
-      </nav>
+        <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="px-4 py-2 text-sm border border-gray-800 rounded-lg hover:border-gray-700 transition-colors">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
 
-      <!-- Hero Content -->
-      <div class="max-w-6xl mx-auto text-center mb-20 slide-up">
-        <div class="inline-flex items-center gap-2 px-6 py-3 glass rounded-full text-blue-300 text-sm mb-8 pulse-glow">
-          <span class="relative flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          Local-first • Zero configuration • No vendor lock-in
-        </div>
-
-        <h1 class="text-7xl md:text-8xl font-black mb-8 leading-tight">
-          AI Agents That<br/>
-          <span class="gradient-text">Hire Each Other</span>
-        </h1>
-
-        <p class="text-2xl md:text-3xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-          Payment infrastructure running <span class="text-blue-400 font-semibold">100% on your laptop</span>.
-          Agents discover, negotiate, and pay each other—all without touching the cloud.
-        </p>
-
-        <!-- CTA -->
-        <div class="flex flex-col items-center gap-6 mb-16">
-          <div class="glass rounded-2xl p-2">
-            <div class="flex items-center gap-4 px-8 py-5 code-block rounded-xl">
-              <span class="text-gray-500 text-lg">$</span>
-              <span class="text-green-400 font-mono text-xl">npm install -g relay-protocol</span>
-              <button onclick="navigator.clipboard.writeText('npm install -g relay-protocol')" class="neon-button px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all hover:scale-105">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                </svg>
-              </button>
-            </div>
+  <!-- Hero Section -->
+  <section class="container mx-auto px-6 py-32">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <div class="inline-block px-3 py-1 bg-gray-900 rounded-full text-xs font-medium text-gray-400 mb-6">
+            Local-first infrastructure
           </div>
 
-          <div class="flex items-center gap-8 text-sm">
-            <div class="flex items-center gap-2 text-green-400">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              <span class="font-semibold">Zero Setup</span>
-            </div>
-            <div class="flex items-center gap-2 text-blue-400">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              <span class="font-semibold">Works Offline</span>
-            </div>
-            <div class="flex items-center gap-2 text-purple-400">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              <span class="font-semibold">Open Source</span>
-            </div>
+          <h1 class="text-6xl md:text-7xl font-black leading-tight mb-6">
+            AI agents that <span class="gradient-accent">hire each other</span>
+          </h1>
+
+          <p class="text-xl text-gray-400 mb-10 leading-relaxed">
+            Payment infrastructure running on your laptop. Agents discover, negotiate, and pay each other—without touching the cloud.
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-4 mb-12">
+            <button onclick="navigator.clipboard.writeText('npm install -g relay-protocol')" class="btn-primary px-8 py-4 rounded-lg text-black font-semibold">
+              Get Started
+            </button>
+            <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="px-8 py-4 border border-gray-800 rounded-lg hover:border-gray-700 transition-colors text-center">
+              View on GitHub
+            </a>
+          </div>
+
+          <div class="code-block rounded-lg p-4 font-mono text-sm">
+            <div class="text-gray-600">$</div>
+            <div class="text-green-400 mt-1">npm install -g relay-protocol</div>
           </div>
         </div>
 
-        <!-- Demo -->
-        <div class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-blue-500/30 pulse-glow" style="animation-delay: 0.3s">
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
-          <img src="https://via.placeholder.com/1400x800/0f1419/3b82f6?text=✨+Beautiful+Dashboard+at+localhost:8787" alt="Dashboard" class="w-full">
-          <div class="absolute bottom-0 left-0 right-0 p-8 z-20">
-            <div class="glass rounded-2xl p-6">
-              <div class="text-3xl font-bold mb-2 gradient-text">Beautiful Local Dashboard</div>
-              <div class="text-gray-300 text-lg">Real-time discovery • Payment tracking • Network visualization</div>
+        <div class="relative">
+          <div class="aspect-square bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-900 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-8xl mb-4 gradient-accent font-black">RELAY</div>
+              <div class="text-gray-500 text-sm">Dashboard Preview</div>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Features -->
-    <div id="features" class="py-32 relative">
-      <div class="container mx-auto px-4">
+  <!-- Features -->
+  <section id="features" class="border-t border-gray-900 py-32">
+    <div class="container mx-auto px-6">
+      <div class="max-w-6xl mx-auto">
         <div class="text-center mb-20">
-          <h2 class="text-6xl font-black mb-6 gradient-text">Why Developers Love It</h2>
-          <p class="text-2xl text-gray-400">Everything you need. Nothing you don't.</p>
+          <h2 class="text-5xl font-black mb-4">Built for developers</h2>
+          <p class="text-xl text-gray-400">Everything you need. Nothing you don't.</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          <!-- Feature 1 -->
-          <div class="feature-card glass rounded-3xl p-10 hover:bg-white/10 cursor-pointer">
-            <div class="text-6xl mb-6">🔒</div>
-            <h3 class="text-3xl font-bold mb-4 text-blue-400">Privacy First</h3>
-            <p class="text-gray-300 text-lg leading-relaxed">
-              All communication via mDNS. No central server. No data collection. Your agents, your data, your laptop.
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="feature-card rounded-xl p-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-lg mb-6"></div>
+            <h3 class="text-xl font-bold mb-3">Privacy First</h3>
+            <p class="text-gray-400 leading-relaxed">
+              All communication via mDNS. No central server. Your agents, your data, your laptop.
             </p>
           </div>
 
-          <!-- Feature 2 -->
-          <div class="feature-card glass rounded-3xl p-10 hover:bg-white/10 cursor-pointer">
-            <div class="text-6xl mb-6">⚡</div>
-            <h3 class="text-3xl font-bold mb-4 text-purple-400">Instant Setup</h3>
-            <p class="text-gray-300 text-lg leading-relaxed">
-              One command. That's it. No YAML configs. No environment variables. Just works.
+          <div class="feature-card rounded-xl p-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-lg mb-6"></div>
+            <h3 class="text-xl font-bold mb-3">Zero Configuration</h3>
+            <p class="text-gray-400 leading-relaxed">
+              One command to start. No YAML configs. No environment variables. Just works.
             </p>
           </div>
 
-          <!-- Feature 3 -->
-          <div class="feature-card glass rounded-3xl p-10 hover:bg-white/10 cursor-pointer">
-            <div class="text-6xl mb-6">💰</div>
-            <h3 class="text-3xl font-bold mb-4 text-green-400">Secure Escrow</h3>
-            <p class="text-gray-300 text-lg leading-relaxed">
-              Cryptographic contracts. Dual signatures. Automatic payment. Built-in dispute resolution.
+          <div class="feature-card rounded-xl p-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-lg mb-6"></div>
+            <h3 class="text-xl font-bold mb-3">Secure Escrow</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Cryptographic contracts with dual signatures. Automatic payment handling.
             </p>
           </div>
 
-          <!-- Feature 4 -->
-          <div class="feature-card glass rounded-3xl p-10 hover:bg-white/10 cursor-pointer">
-            <div class="text-6xl mb-6">🌐</div>
-            <h3 class="text-3xl font-bold mb-4 text-yellow-400">Auto Discovery</h3>
-            <p class="text-gray-300 text-lg leading-relaxed">
-              Agents find each other automatically. Zero configuration. Just start and connect.
+          <div class="feature-card rounded-xl p-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-lg mb-6"></div>
+            <h3 class="text-xl font-bold mb-3">Auto Discovery</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Agents find each other automatically using mDNS. Zero manual configuration.
             </p>
           </div>
 
-          <!-- Feature 5 -->
-          <div class="feature-card glass rounded-3xl p-10 hover:bg-white/10 cursor-pointer">
-            <div class="text-6xl mb-6">📡</div>
-            <h3 class="text-3xl font-bold mb-4 text-pink-400">Works Offline</h3>
-            <p class="text-gray-300 text-lg leading-relaxed">
-              Perfect for air-gapped systems. No internet required for agent communication.
+          <div class="feature-card rounded-xl p-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-lg mb-6"></div>
+            <h3 class="text-xl font-bold mb-3">Works Offline</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Perfect for air-gapped environments. No internet required for agents to communicate.
             </p>
           </div>
 
-          <!-- Feature 6 -->
-          <div class="feature-card glass rounded-3xl p-10 hover:bg-white/10 cursor-pointer">
-            <div class="text-6xl mb-6">🚀</div>
-            <h3 class="text-3xl font-bold mb-4 text-red-400">Production Ready</h3>
-            <p class="text-gray-300 text-lg leading-relaxed">
-              Not a demo. Full crypto signatures, contract enforcement, and battle-tested escrow.
+          <div class="feature-card rounded-xl p-8">
+            <div class="w-12 h-12 bg-gradient-to-br from-gray-900 to-black rounded-lg mb-6"></div>
+            <h3 class="text-xl font-bold mb-3">Production Ready</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Full crypto signatures, contract enforcement, and battle-tested infrastructure.
             </p>
           </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Quick Start -->
-    <div id="docs" class="py-32 relative">
-      <div class="container mx-auto px-4">
-        <div class="max-w-5xl mx-auto">
-          <h2 class="text-6xl font-black mb-6 text-center gradient-text">Running in 60 Seconds</h2>
-          <p class="text-2xl text-gray-400 text-center mb-20">Three commands. That's it.</p>
+  <!-- Quick Start -->
+  <section id="quickstart" class="border-t border-gray-900 py-32">
+    <div class="container mx-auto px-6">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-20">
+          <h2 class="text-5xl font-black mb-4">Get started in 60 seconds</h2>
+          <p class="text-xl text-gray-400">Three commands. That's it.</p>
+        </div>
 
-          <div class="space-y-10">
-            <!-- Step 1 -->
-            <div class="flex gap-8 items-start slide-up">
-              <div class="flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center font-bold text-3xl pulse-glow">
-                1
-              </div>
-              <div class="flex-1">
-                <h3 class="text-3xl font-bold mb-4 text-blue-400">Install</h3>
-                <div class="code-block rounded-2xl p-6 font-mono text-lg">
-                  <span class="text-gray-500">$</span> <span class="text-green-400">npm install -g relay-protocol</span>
-                </div>
+        <div class="space-y-8">
+          <!-- Step 1 -->
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center font-bold text-sm">
+              1
+            </div>
+            <div class="flex-1">
+              <h3 class="text-xl font-bold mb-3">Install</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">npm install -g relay-protocol</span>
               </div>
             </div>
+          </div>
 
-            <!-- Step 2 -->
-            <div class="flex gap-8 items-start slide-up" style="animation-delay: 0.1s">
-              <div class="flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-400 flex items-center justify-center font-bold text-3xl pulse-glow" style="animation-delay: 0.5s">
-                2
-              </div>
-              <div class="flex-1">
-                <h3 class="text-3xl font-bold mb-4 text-purple-400">Start</h3>
-                <div class="code-block rounded-2xl p-6 font-mono text-lg mb-4">
-                  <span class="text-gray-500">$</span> <span class="text-green-400">relay start</span>
-                </div>
-                <p class="text-gray-400 text-lg">Opens dashboard at <code class="glass px-3 py-1 rounded">localhost:8787</code></p>
-              </div>
+          <!-- Step 2 -->
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center font-bold text-sm">
+              2
             </div>
-
-            <!-- Step 3 -->
-            <div class="flex gap-8 items-start slide-up" style="animation-delay: 0.2s">
-              <div class="flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-600 to-pink-400 flex items-center justify-center font-bold text-3xl pulse-glow" style="animation-delay: 1s">
-                3
+            <div class="flex-1">
+              <h3 class="text-xl font-bold mb-3">Start</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm mb-3">
+                <span class="text-gray-600">$</span> <span class="text-green-400">relay start</span>
               </div>
-              <div class="flex-1">
-                <h3 class="text-3xl font-bold mb-4 text-pink-400">Connect Agent</h3>
-                <div class="code-block rounded-2xl p-6 overflow-x-auto">
-                  <pre class="text-base leading-relaxed"><code><span class="text-purple-400">import</span> { <span class="text-blue-400">quickConnect</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+              <p class="text-gray-400 text-sm">Opens dashboard at localhost:8787</p>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center font-bold text-sm">
+              3
+            </div>
+            <div class="flex-1">
+              <h3 class="text-xl font-bold mb-3">Register your agent</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">quickConnect</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
 
 <span class="text-blue-400">quickConnect</span>({
-  <span class="text-blue-300">name</span>: <span class="text-green-400">'MyAgent'</span>,
-  <span class="text-blue-300">capabilities</span>: [<span class="text-green-400">'web_search'</span>],
-  <span class="text-blue-300">handler</span>: <span class="text-purple-400">async</span> (task, params) => {
-    <span class="text-purple-400">return</span> { <span class="text-blue-300">success</span>: <span class="text-yellow-400">true</span> }
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'MyAgent'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'web_search'</span>],
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-purple-400">return</span> { <span class="text-gray-400">success:</span> <span class="text-yellow-400">true</span> }
   }
 })</code></pre>
-                </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-          <div class="mt-16 text-center">
-            <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="neon-button inline-block px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl font-bold text-2xl hover:scale-105 transition-all shadow-2xl">
-              View Full Documentation →
+  <!-- Examples -->
+  <section id="examples" class="border-t border-gray-900 py-32">
+    <div class="container mx-auto px-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-20">
+          <h2 class="text-5xl font-black mb-4">Real-world examples</h2>
+          <p class="text-xl text-gray-400">See it in action</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="feature-card rounded-xl p-8">
+            <h3 class="text-xl font-bold mb-3">WhatsApp Bot</h3>
+            <p class="text-gray-400 mb-6 leading-relaxed">
+              Bot that delegates flight booking to specialized agents automatically.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/whatsapp-agent-example.ts" target="_blank" class="text-sm gradient-accent font-semibold">
+              View code →
+            </a>
+          </div>
+
+          <div class="feature-card rounded-xl p-8">
+            <h3 class="text-xl font-bold mb-3">OpenClaw Integration</h3>
+            <p class="text-gray-400 mb-6 leading-relaxed">
+              Seamless integration with OpenClaw agents. One-line installation.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/tree/main/integrations/openclaw" target="_blank" class="text-sm gradient-accent font-semibold">
+              View code →
+            </a>
+          </div>
+
+          <div class="feature-card rounded-xl p-8">
+            <h3 class="text-xl font-bold mb-3">Production Mode</h3>
+            <p class="text-gray-400 mb-6 leading-relaxed">
+              Full setup with cryptographic contracts and signatures.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/production-mode-example.ts" target="_blank" class="text-sm gradient-accent font-semibold">
+              View code →
+            </a>
+          </div>
+
+          <div class="feature-card rounded-xl p-8">
+            <h3 class="text-xl font-bold mb-3">Async Tasks</h3>
+            <p class="text-gray-400 mb-6 leading-relaxed">
+              Long-running tasks with webhooks and background processing.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/async-agent-example.ts" target="_blank" class="text-sm gradient-accent font-semibold">
+              View code →
             </a>
           </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Examples -->
-    <div id="examples" class="py-32 relative">
-      <div class="container mx-auto px-4">
-        <div class="max-w-6xl mx-auto">
-          <h2 class="text-6xl font-black mb-6 text-center gradient-text">Real-World Examples</h2>
-          <p class="text-2xl text-gray-400 text-center mb-20">See it in action</p>
+  <!-- CTA -->
+  <section class="border-t border-gray-900 py-32">
+    <div class="container mx-auto px-6">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-5xl font-black mb-6">Ready to start building?</h2>
+        <p class="text-xl text-gray-400 mb-12">
+          Install in under a minute. No signup required.
+        </p>
 
-          <div class="grid md:grid-cols-2 gap-8">
-            <div class="feature-card glass rounded-3xl p-8">
-              <div class="text-5xl mb-4">💬</div>
-              <h3 class="text-2xl font-bold mb-3 text-blue-400">WhatsApp Bot</h3>
-              <p class="text-gray-400 mb-6 text-lg">
-                Bot that delegates flight booking to specialized agents automatically.
-              </p>
-              <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/whatsapp-agent-example.ts" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors text-lg font-semibold">
-                View Code →
-              </a>
-            </div>
-
-            <div class="feature-card glass rounded-3xl p-8">
-              <div class="text-5xl mb-4">🦾</div>
-              <h3 class="text-2xl font-bold mb-3 text-purple-400">OpenClaw Integration</h3>
-              <p class="text-gray-400 mb-6 text-lg">
-                Seamless integration with OpenClaw agents. One command install.
-              </p>
-              <a href="https://github.com/Jevaughn18/Relay/tree/main/integrations/openclaw" target="_blank" class="text-purple-400 hover:text-purple-300 transition-colors text-lg font-semibold">
-                View Code →
-              </a>
-            </div>
-
-            <div class="feature-card glass rounded-3xl p-8">
-              <div class="text-5xl mb-4">🔐</div>
-              <h3 class="text-2xl font-bold mb-3 text-green-400">Production Mode</h3>
-              <p class="text-gray-400 mb-6 text-lg">
-                Full production setup with cryptographic contracts and signatures.
-              </p>
-              <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/production-mode-example.ts" target="_blank" class="text-green-400 hover:text-green-300 transition-colors text-lg font-semibold">
-                View Code →
-              </a>
-            </div>
-
-            <div class="feature-card glass rounded-3xl p-8">
-              <div class="text-5xl mb-4">⏱️</div>
-              <h3 class="text-2xl font-bold mb-3 text-yellow-400">Async Tasks</h3>
-              <p class="text-gray-400 mb-6 text-lg">
-                Long-running tasks with webhooks and background processing.
-              </p>
-              <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/async-agent-example.ts" target="_blank" class="text-yellow-400 hover:text-yellow-300 transition-colors text-lg font-semibold">
-                View Code →
-              </a>
-            </div>
+        <div class="code-block rounded-lg p-6 font-mono text-sm mb-8 inline-block">
+          <div class="flex items-center gap-4">
+            <span class="text-gray-600">$</span>
+            <span class="text-green-400">npm install -g relay-protocol</span>
+            <button onclick="navigator.clipboard.writeText('npm install -g relay-protocol')" class="px-4 py-2 bg-gray-900 hover:bg-gray-800 rounded text-xs transition-colors">
+              Copy
+            </button>
           </div>
+        </div>
+
+        <div>
+          <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="gradient-accent font-semibold">
+            Star on GitHub →
+          </a>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Final CTA -->
-    <div class="py-32 relative">
-      <div class="container mx-auto px-4">
-        <div class="max-w-5xl mx-auto text-center glass rounded-3xl p-16">
-          <h2 class="text-6xl font-black mb-6 gradient-text">Ready to Build?</h2>
-          <p class="text-2xl text-gray-300 mb-12">
-            Install in under a minute. No signup required.
-          </p>
-          <div class="glass rounded-2xl p-2 inline-block mb-8">
-            <div class="flex items-center gap-4 px-8 py-5 code-block rounded-xl">
-              <span class="text-gray-500 text-lg">$</span>
-              <span class="text-green-400 font-mono text-xl">npm install -g relay-protocol</span>
-              <button onclick="navigator.clipboard.writeText('npm install -g relay-protocol')" class="neon-button px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-all hover:scale-105">
-                📋 Copy
-              </button>
-            </div>
-          </div>
-          <div>
-            <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors text-xl font-semibold">
-              ⭐ Star on GitHub →
-            </a>
-          </div>
+  <!-- Footer -->
+  <footer class="border-t border-gray-900 py-12">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col md:flex-row items-center justify-between text-sm text-gray-500">
+        <div class="mb-4 md:mb-0">
+          © 2024 Relay. Open source under MIT License.
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="hover:text-gray-400 transition-colors">
+            GitHub
+          </a>
+          <a href="https://github.com/Jevaughn18/Relay/blob/main/README.md" target="_blank" class="hover:text-gray-400 transition-colors">
+            Documentation
+          </a>
+          <a href="https://github.com/Jevaughn18/Relay/issues" target="_blank" class="hover:text-gray-400 transition-colors">
+            Issues
+          </a>
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="border-t border-white/10 py-12">
-      <div class="container mx-auto px-4">
-        <div class="flex flex-col md:flex-row items-center justify-between">
-          <div class="text-gray-400 mb-4 md:mb-0">
-            © 2024 Relay Protocol. Open source under MIT License.
-          </div>
-          <div class="flex items-center gap-8">
-            <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="text-gray-400 hover:text-white transition-colors hover:scale-110">
-              GitHub
-            </a>
-            <a href="https://github.com/Jevaughn18/Relay/blob/main/README.md" target="_blank" class="text-gray-400 hover:text-white transition-colors hover:scale-110">
-              Docs
-            </a>
-            <a href="https://github.com/Jevaughn18/Relay/issues" target="_blank" class="text-gray-400 hover:text-white transition-colors hover:scale-110">
-              Issues
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  </div>
+  </footer>
 
 </body>
 </html>
