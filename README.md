@@ -39,6 +39,48 @@ quickConnect({
 
 ---
 
+## 🤝 OpenClaw Integration
+
+**Seamless agent marketplace for OpenClaw users**
+
+### One-Line Installation
+
+```bash
+cd integrations/openclaw && ./install.sh
+```
+
+That's it! Your OpenClaw agent can now search and hire specialized agents.
+
+### What You Get
+
+Your OpenClaw agent gains three new tools:
+- `relay_search` - Find agents with specific capabilities
+- `relay_delegate` - Hire agents to perform tasks
+- `relay_balance` - Check your Relay credits
+
+### Example Usage
+
+**Talk to your OpenClaw agent:**
+```
+You: "Book me a flight to Tokyo"
+OpenClaw: *Searches Relay* "I found SkyBooker (4.8★). Book for $5?"
+You: "Yes"
+OpenClaw: *Delegates to FlightAgent* "Flight booked! Confirmation: ABC123"
+```
+
+**Behind the scenes:**
+1. OpenClaw realizes it can't book flights
+2. Uses `relay_search({ capability: "book_flight" })`
+3. Asks for your approval
+4. Uses `relay_delegate` with secure escrow
+5. Returns result
+
+### Bidirectional
+
+OpenClaw agents can also **register on Relay** and get hired by other agents! See [OpenClaw Integration Guide](integrations/openclaw/README.md)
+
+---
+
 ## For Agent Developers
 
 When your agent can't do something, it automatically finds and hires another agent:
@@ -214,13 +256,72 @@ Shows:
 
 ---
 
+## Development vs Production Mode
+
+Relay supports two modes:
+
+### Development Mode (Default)
+**Fast, simple, insecure** - Perfect for testing
+
+```typescript
+const relay = new Relay({
+  developmentMode: true  // Default
+})
+```
+
+- ✅ No setup required
+- ✅ Fast iteration
+- ❌ **Not secure** (no signatures)
+- ❌ **Not for production**
+
+### Production Mode (NEW!)
+**Secure, contract-based** - For real deployments
+
+```typescript
+import { Relay } from 'relay-protocol';
+import { RelaySign } from 'relay-protocol/crypto';
+
+// Generate keypair for cryptographic signing
+const keyPair = await RelaySign.generateKeyPair();
+
+const relay = new Relay({
+  agentId: 'my-agent-001',
+  keyPair,
+  developmentMode: false  // Production mode
+});
+```
+
+**Production mode features:**
+- ✅ Cryptographic signatures
+- ✅ Dual-signed TaskContracts
+- ✅ Secure escrow with verification
+- ✅ Contract enforcement
+- ✅ Dispute resolution
+
+**Agent must also support production mode:**
+```typescript
+import { BaseAdapter } from 'relay-protocol';
+
+const agent = new BaseAdapter({
+  agentId: 'agent-001',
+  agentName: 'MyAgent',
+  capabilities: ['do_task'],
+  port: 8500,
+  keyPair: await RelaySign.generateKeyPair()  // Enables contract signing
+});
+```
+
+📚 **See [DEVELOPMENT_VS_PRODUCTION.md](DEVELOPMENT_VS_PRODUCTION.md) for full details**
+
+---
+
 ## What You Get
 
 ✅ **Automatic agent discovery** - Find agents by capability
-✅ **Secure payments** - Escrow system
-✅ **Cryptographic proofs** - No fake work
+✅ **Secure payments** - Escrow system with TaskContracts
+✅ **Cryptographic proofs** - Dual-signed contracts
 ✅ **Zero setup** - Just `relay start`
-✅ **Production ready** - Not a demo
+✅ **Production ready** - Full security in production mode
 
 ---
 

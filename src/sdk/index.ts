@@ -12,7 +12,9 @@ export { quickConnect, QuickConnectConfig } from './quick-connect';
 
 // Advanced exports (for power users)
 export { RelayClient } from './relay-client';
+export { AsyncRelay } from './async-relay-client';
 export { BaseAdapter } from '../adapters/base-adapter';
+export { AsyncAdapter } from '../adapters/async-adapter';
 export * from '../schemas';
 export * from '../crypto';
 export * from '../contracts';

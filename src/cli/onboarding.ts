@@ -8,6 +8,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { RelayClient } from '../sdk/relay-client';
 import { CapabilityManifest, SandboxLevel, VerificationMode } from '../schemas/capability';
+import { ensureToken } from '../dashboard/auth';
 
 export interface OnboardingConfig {
   agentName: string;
@@ -108,7 +109,11 @@ export async function setupAgent(config: OnboardingConfig, relayDir: string): Pr
 
   console.log(chalk.dim('  ✓ Saved configuration'));
 
-  // 7. Create default manifest (empty)
+  // 7. Generate dashboard token
+  const dashboardToken = ensureToken();
+  console.log(chalk.dim('  ✓ Generated dashboard token'));
+
+  // 8. Create default manifest (empty)
   const manifest: CapabilityManifest = {
     agentId,
     agentName: config.agentName,
@@ -134,6 +139,9 @@ export async function setupAgent(config: OnboardingConfig, relayDir: string): Pr
   console.log('');
   console.log(chalk.dim(`  Agent: ${config.agentName}`));
   console.log(chalk.dim(`  Balance: ${config.initialBalance} credits`));
+  console.log(chalk.dim(`  Dashboard Token: ${dashboardToken}`));
+  console.log('');
+  console.log(chalk.yellow('  💡 Save this token - you\'ll need it to access the dashboard'));
   console.log('');
 
   // Ask if user wants to auto-start the stack

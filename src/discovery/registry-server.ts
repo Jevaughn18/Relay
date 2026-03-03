@@ -11,6 +11,8 @@ import { FederatedRegistry } from './federated-registry';
 import { CapabilityManifest, CapabilityManifestHelper } from '../schemas/capability';
 import { RelaySign } from '../crypto/signer';
 import { ReplayCache, RELAY_AUTH_HEADERS, verifySignedRequest } from '../network/request-auth';
+import { MdnsAgentDiscovery, AgentServiceInfo } from './mdns-discovery';
+import axios from 'axios';
 
 export interface RegistryServerConfig {
   port: number;
@@ -20,6 +22,7 @@ export interface RegistryServerConfig {
   federationSyncIntervalMs?: number;
   federationRequestTimeoutMs?: number;
   requireSignedRequests?: boolean;
+  enableMdns?: boolean; // Enable mDNS auto-discovery (default: true)
 }
 
 /**
@@ -30,6 +33,7 @@ export class RegistryServer {
   private config: RegistryServerConfig;
   private registry: AgentRegistry;
   private federatedRegistry?: FederatedRegistry;
+  private mdnsDiscovery?: MdnsAgentDiscovery;
   private staleCheckTimer?: NodeJS.Timeout;
   private knownAgentKeys: Map<string, string> = new Map();
   private replayCache = new ReplayCache();
@@ -37,6 +41,8 @@ export class RegistryServer {
   constructor(config: RegistryServerConfig) {
     this.config = config;
     this.registry = new AgentRegistry();
+
+    // Setup federation if peers configured
     if (config.peers && config.peers.length > 0) {
       this.federatedRegistry = new FederatedRegistry(this.registry, {
         peers: config.peers,
@@ -45,6 +51,14 @@ export class RegistryServer {
         stalePeerMinutes: config.staleCheckInterval,
       });
     }
+
+    // Setup mDNS discovery if enabled (default: true)
+    const enableMdns = config.enableMdns !== false;
+    if (enableMdns) {
+      this.mdnsDiscovery = new MdnsAgentDiscovery();
+      this.setupMdnsListeners();
+    }
+
     this.server = http.createServer(this.handleRequest.bind(this));
   }
 
@@ -94,6 +108,65 @@ export class RegistryServer {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Not found' }));
     }
+  }
+
+  /**
+   * Setup mDNS discovery event listeners
+   */
+  private setupMdnsListeners(): void {
+    if (!this.mdnsDiscovery) return;
+
+    // Auto-register discovered agents
+    this.mdnsDiscovery.on('agent:discovered', async (agentInfo: AgentServiceInfo) => {
+      console.log(`[mDNS] Auto-registering discovered agent: ${agentInfo.agentName}`);
+
+      try {
+        // Fetch manifest from agent endpoint
+        const response = await axios.get(`${agentInfo.endpoint}/status`, {
+          timeout: 5000,
+        });
+
+        // Create minimal manifest for auto-discovered agents
+        const manifest: CapabilityManifest = {
+          agentId: agentInfo.agentId,
+          agentName: agentInfo.agentName,
+          version: agentInfo.version,
+          capabilities: agentInfo.capabilities.map((cap) => ({
+            name: cap,
+            description: `${agentInfo.agentName} can ${cap}`,
+            inputSchema: {},
+            outputSchema: {},
+            baseCost: 100,
+            estimatedDurationSeconds: 30,
+          })),
+          sandboxLevel: 'isolated' as any,
+          verificationMode: 'automated' as any,
+          maxConcurrentTasks: 5,
+          minReputationRequired: 0,
+          acceptsDisputes: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        // Register agent (skip signature verification for mDNS-discovered agents)
+        this.registry.register(
+          agentInfo.agentId,
+          agentInfo.agentName,
+          agentInfo.endpoint,
+          manifest
+        );
+
+        console.log(`[mDNS] ✓ Auto-registered: ${agentInfo.agentName}`);
+      } catch (error: any) {
+        console.error(`[mDNS] Failed to auto-register ${agentInfo.agentName}:`, error.message);
+      }
+    });
+
+    // Auto-unregister agents that leave
+    this.mdnsDiscovery.on('agent:left', (agentInfo: AgentServiceInfo) => {
+      console.log(`[mDNS] Agent left, unregistering: ${agentInfo.agentName}`);
+      this.registry.unregister(agentInfo.agentId);
+    });
   }
 
   /**
@@ -391,6 +464,12 @@ export class RegistryServer {
           console.log(`   Federation enabled with ${this.config.peers?.length || 0} peers`);
         }
 
+        // Start mDNS discovery
+        if (this.mdnsDiscovery) {
+          this.mdnsDiscovery.start();
+          console.log(`   mDNS auto-discovery enabled`);
+        }
+
         // Start stale check timer
         const interval = (this.config.staleCheckInterval || 5) * 60 * 1000;
         this.staleCheckTimer = setInterval(() => {
@@ -415,6 +494,9 @@ export class RegistryServer {
       }
       if (this.federatedRegistry) {
         this.federatedRegistry.stop();
+      }
+      if (this.mdnsDiscovery) {
+        this.mdnsDiscovery.stop();
       }
 
       this.server.close((err) => {

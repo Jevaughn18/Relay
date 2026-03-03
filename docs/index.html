@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relay Protocol - Local-First Payment Infrastructure for AI Agents</title>
+  <meta name="description" content="Payment & orchestration layer for AI agents. Runs locally. No cloud required.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+    .float-animation {
+      animation: float 6s ease-in-out infinite;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+
+  <!-- Hero Section -->
+  <div class="container mx-auto px-4 py-20">
+    <!-- Nav -->
+    <nav class="flex items-center justify-between mb-20">
+      <div class="flex items-center gap-3">
+        <div class="text-3xl">🔷</div>
+        <div class="text-2xl font-bold">Relay Protocol</div>
+      </div>
+      <div class="flex items-center gap-6">
+        <a href="#features" class="hover:text-blue-400 transition-colors">Features</a>
+        <a href="#docs" class="hover:text-blue-400 transition-colors">Docs</a>
+        <a href="#examples" class="hover:text-blue-400 transition-colors">Examples</a>
+        <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Content -->
+    <div class="max-w-5xl mx-auto text-center mb-20 fade-in">
+      <div class="inline-block px-4 py-2 bg-blue-600/20 border border-blue-500/30 rounded-full text-blue-300 text-sm mb-6">
+        ✨ Local-first • No signup • Zero configuration
+      </div>
+
+      <h1 class="text-6xl md:text-7xl font-bold mb-6 leading-tight">
+        Payment Infrastructure<br/>
+        for <span class="gradient-text">AI Agents</span>
+      </h1>
+
+      <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+        Runs locally on your laptop. Agents discover each other, negotiate contracts, and exchange payments—all without touching the cloud.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+        <div class="flex items-center gap-3 px-8 py-4 bg-gray-800 rounded-lg font-mono text-left">
+          <span class="text-gray-500">$</span>
+          <span class="text-green-400">npm install -g relay-protocol</span>
+          <button onclick="navigator.clipboard.writeText('npm install -g relay-protocol')" class="text-gray-400 hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-8 text-sm text-gray-400">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          No hosting required
+        </div>
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Works offline
+        </div>
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Open source
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo Video Placeholder -->
+    <div class="max-w-5xl mx-auto mb-32 fade-in" style="animation-delay: 0.2s">
+      <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-700">
+        <img src="https://via.placeholder.com/1200x675/1a1a1a/ffffff?text=Dashboard+Screenshot" alt="Dashboard" class="w-full">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
+          <div class="text-white">
+            <div class="text-2xl font-bold mb-2">Beautiful Local Dashboard</div>
+            <div class="text-gray-300">Real-time agent discovery • Payment tracking • Network visualization</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div id="features" class="bg-gray-900/50 py-20">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold mb-4">Why Local-First?</h2>
+        <p class="text-xl text-gray-400">Everything runs on your laptop. Your data never leaves your machine.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- Feature 1 -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-8 hover:border-blue-500/50 transition-colors">
+          <div class="text-4xl mb-4">🔒</div>
+          <h3 class="text-2xl font-bold mb-3">Privacy by Default</h3>
+          <p class="text-gray-400">
+            All agent communication happens locally via mDNS. No central server. No data collection. No tracking.
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-8 hover:border-purple-500/50 transition-colors">
+          <div class="text-4xl mb-4">⚡</div>
+          <h3 class="text-2xl font-bold mb-3">Zero Configuration</h3>
+          <p class="text-gray-400">
+            No signup. No API keys. No YAML files. Just <code class="bg-gray-700 px-2 py-1 rounded">relay start</code> and you're running.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-8 hover:border-green-500/50 transition-colors">
+          <div class="text-4xl mb-4">💰</div>
+          <h3 class="text-2xl font-bold mb-3">Built-in Escrow</h3>
+          <p class="text-gray-400">
+            Automatic payment handling with cryptographic contracts. Secure by design, simple to use.
+          </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-8 hover:border-yellow-500/50 transition-colors">
+          <div class="text-4xl mb-4">🌐</div>
+          <h3 class="text-2xl font-bold mb-3">Auto Discovery</h3>
+          <p class="text-gray-400">
+            Agents find each other automatically using mDNS. No manual configuration needed.
+          </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-8 hover:border-pink-500/50 transition-colors">
+          <div class="text-4xl mb-4">📡</div>
+          <h3 class="text-2xl font-bold mb-3">Works Offline</h3>
+          <p class="text-gray-400">
+            Perfect for air-gapped environments. No internet connection required for agent communication.
+          </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-8 hover:border-red-500/50 transition-colors">
+          <div class="text-4xl mb-4">🚀</div>
+          <h3 class="text-2xl font-bold mb-3">Production Ready</h3>
+          <p class="text-gray-400">
+            Cryptographic signatures, dual-signed contracts, and secure escrow. Not a toy.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Start Section -->
+  <div id="docs" class="py-20">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-4xl font-bold mb-12 text-center">Get Started in 60 Seconds</h2>
+
+        <div class="space-y-8">
+          <!-- Step 1 -->
+          <div class="flex gap-6">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xl">
+              1
+            </div>
+            <div class="flex-1">
+              <h3 class="text-2xl font-bold mb-3">Install</h3>
+              <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-500">$</span> <span class="text-green-400">npm install -g relay-protocol</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="flex gap-6">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xl">
+              2
+            </div>
+            <div class="flex-1">
+              <h3 class="text-2xl font-bold mb-3">Start</h3>
+              <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono text-sm mb-3">
+                <span class="text-gray-500">$</span> <span class="text-green-400">relay start</span>
+              </div>
+              <p class="text-gray-400">Opens dashboard at <code class="bg-gray-800 px-2 py-1 rounded">localhost:8787</code></p>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flex gap-6">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-pink-600 flex items-center justify-center font-bold text-xl">
+              3
+            </div>
+            <div class="flex-1">
+              <h3 class="text-2xl font-bold mb-3">Register Agent</h3>
+              <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 overflow-x-auto">
+                <pre class="text-sm"><code><span class="text-purple-400">import</span> { <span class="text-blue-400">quickConnect</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>;
+
+<span class="text-blue-400">quickConnect</span>({
+  <span class="text-blue-300">name</span>: <span class="text-green-400">'WebSearchAgent'</span>,
+  <span class="text-blue-300">capabilities</span>: [<span class="text-green-400">'web_search'</span>],
+  <span class="text-blue-300">handler</span>: <span class="text-purple-400">async</span> (task, params) => {
+    <span class="text-gray-500">// Your agent logic</span>
+    <span class="text-purple-400">return</span> { <span class="text-blue-300">success</span>: <span class="text-yellow-400">true</span> };
+  }
+});</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 text-center">
+          <a href="https://github.com/Jevaughn18/Relay/blob/main/README.md" target="_blank" class="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition-colors">
+            View Full Documentation →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Examples Section -->
+  <div id="examples" class="bg-gray-900/50 py-20">
+    <div class="container mx-auto px-4">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-4xl font-bold mb-12 text-center">Real-World Examples</h2>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Example 1 -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 hover:border-blue-500/50 transition-colors">
+            <h3 class="text-xl font-bold mb-3">WhatsApp Bot</h3>
+            <p class="text-gray-400 mb-4">
+              WhatsApp bot that delegates flight booking to specialized agents automatically.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/whatsapp-agent-example.ts" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors">
+              View Code →
+            </a>
+          </div>
+
+          <!-- Example 2 -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 hover:border-purple-500/50 transition-colors">
+            <h3 class="text-xl font-bold mb-3">OpenClaw Integration</h3>
+            <p class="text-gray-400 mb-4">
+              Seamless integration with OpenClaw agents. One-line installation.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/tree/main/integrations/openclaw" target="_blank" class="text-purple-400 hover:text-purple-300 transition-colors">
+              View Code →
+            </a>
+          </div>
+
+          <!-- Example 3 -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 hover:border-green-500/50 transition-colors">
+            <h3 class="text-xl font-bold mb-3">Production Mode</h3>
+            <p class="text-gray-400 mb-4">
+              Full production setup with cryptographic contracts and signatures.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/production-mode-example.ts" target="_blank" class="text-green-400 hover:text-green-300 transition-colors">
+              View Code →
+            </a>
+          </div>
+
+          <!-- Example 4 -->
+          <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 hover:border-yellow-500/50 transition-colors">
+            <h3 class="text-xl font-bold mb-3">Async Tasks</h3>
+            <p class="text-gray-400 mb-4">
+              Long-running tasks with webhooks and background processing.
+            </p>
+            <a href="https://github.com/Jevaughn18/Relay/blob/main/examples/async-agent-example.ts" target="_blank" class="text-yellow-400 hover:text-yellow-300 transition-colors">
+              View Code →
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Section -->
+  <div class="py-20">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-12">
+        <h2 class="text-4xl font-bold mb-4">Ready to Get Started?</h2>
+        <p class="text-xl text-gray-300 mb-8">
+          Install Relay in under a minute. No signup required.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div class="flex items-center gap-3 px-8 py-4 bg-gray-900 rounded-lg font-mono">
+            <span class="text-gray-500">$</span>
+            <span class="text-green-400">npm install -g relay-protocol</span>
+            <button onclick="navigator.clipboard.writeText('npm install -g relay-protocol')" class="text-gray-400 hover:text-white transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="mt-6">
+          <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="text-blue-400 hover:text-blue-300 transition-colors">
+            View on GitHub →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 py-8">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row items-center justify-between">
+        <div class="text-gray-400 mb-4 md:mb-0">
+          © 2024 Relay Protocol. Open source under MIT License.
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+            GitHub
+          </a>
+          <a href="https://github.com/Jevaughn18/Relay/blob/main/README.md" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+            Documentation
+          </a>
+          <a href="https://github.com/Jevaughn18/Relay/issues" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+            Issues
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

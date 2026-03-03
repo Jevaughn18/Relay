@@ -13,7 +13,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
 import { RelayClient } from './relay-client';
-import { KeyPair } from '../crypto/signer';
+import { KeyPair, RelaySign } from '../crypto/signer';
+import { createSignedHeaders } from '../network/request-auth';
+import {
+  TaskContract,
+  TaskContractHelper,
+  ContractStatus,
+} from '../schemas/contract';
 
 export interface AgentSearchQuery {
   canDo?: string; // Capability name
@@ -48,17 +54,25 @@ export class Relay {
   private escrowUrl: string;
   private agentId?: string;
   private keyPair?: KeyPair;
+  private developmentMode: boolean;
 
   constructor(options?: {
     registryUrl?: string;
     escrowUrl?: string;
     agentId?: string;
     keyPair?: KeyPair;
+    /**
+     * Development mode: Uses simple escrow endpoints without contracts/signatures
+     * WARNING: Do NOT use in production! No escrow security.
+     * Default: true (for easy getting started)
+     */
+    developmentMode?: boolean;
   }) {
     this.registryUrl = options?.registryUrl || 'http://127.0.0.1:9001';
     this.escrowUrl = options?.escrowUrl || 'http://127.0.0.1:9010';
     this.agentId = options?.agentId;
     this.keyPair = options?.keyPair;
+    this.developmentMode = options?.developmentMode !== false; // Default: true
   }
 
   /**
@@ -96,14 +110,35 @@ export class Relay {
   }
 
   /**
+   * Create signed request headers for API calls
+   */
+  private getSignedHeaders(method: string, path: string, body?: any): Record<string, string> {
+    if (!this.agentId || !this.keyPair) {
+      return {}; // Return empty if not initialized (will fail auth if required)
+    }
+
+    const rawBody = body ? JSON.stringify(body) : undefined;
+
+    return createSignedHeaders({
+      agentId: this.agentId,
+      privateKey: this.keyPair.privateKey,
+      publicKey: this.keyPair.publicKey,
+      method,
+      path,
+      rawBody,
+    });
+  }
+
+  /**
    * Find an agent that can perform a capability
    */
   async findAgent(query: AgentSearchQuery): Promise<Agent | null> {
     await this.initialize();
 
     try {
-      // Query registry
-      const response = await axios.get(`${this.registryUrl}/agents`);
+      // Query registry with signed headers
+      const headers = this.getSignedHeaders('GET', '/agents');
+      const response = await axios.get(`${this.registryUrl}/agents`, { headers });
       const { agents } = response.data;
 
       // Filter by capability
@@ -168,21 +203,23 @@ export class Relay {
         };
       }
 
-      // Create escrow
+      // Step 1: Lock funds in escrow (proper /lock endpoint)
       const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-      const escrowId = await this.createEscrow(taskId, agent.agentId, amount);
+      const lockId = await this.lockEscrow(taskId, agent.agentId, amount, request);
 
-      // Delegate task to agent
+      // Step 2: Delegate task to agent
       const result = await this.delegateTask(agent.endpoint, {
         taskId,
-        escrowId,
+        lockId,
         payment: amount,
         ...request,
       });
 
-      // Release escrow on success
+      // Step 3: Release or refund based on result
       if (result.success) {
-        await this.releaseEscrow(escrowId);
+        await this.releaseEscrow(lockId);
+      } else {
+        await this.refundEscrow(lockId);
       }
 
       return result;
@@ -195,39 +232,200 @@ export class Relay {
   }
 
   /**
-   * Create escrow for task payment
+   * Lock funds in escrow for task payment
    */
-  private async createEscrow(
+  private async lockEscrow(
     taskId: string,
     providerAgentId: string,
-    amount: number
+    amount: number,
+    request: Omit<DelegationRequest, 'payment'>
   ): Promise<string> {
-    const response = await axios.post(`${this.escrowUrl}/escrow`, {
-      taskId,
-      clientAgentId: this.agentId,
-      providerAgentId,
-      amount,
-    });
+    if (this.developmentMode) {
+      // Development mode: Simple API, no contracts
+      const body = {
+        taskId,
+        fromAgentId: this.agentId,
+        toAgentId: providerAgentId,
+        amount,
+      };
 
-    return response.data.escrowId;
+      const response = await axios.post(`${this.escrowUrl}/lock/simple`, body);
+      return response.data.lockId || response.data.contractId;
+    } else {
+      // Production mode: Create and sign TaskContract
+      if (!this.agentId || !this.keyPair) {
+        throw new Error('Production mode requires agentId and keyPair to be configured');
+      }
+
+      // Step 1: Create contract
+      const contract = await this.createTaskContract(
+        taskId,
+        providerAgentId,
+        amount,
+        request
+      );
+
+      // Step 2: Sign contract as delegator
+      const signedContract = this.signContractAsDelegator(contract);
+
+      // Step 3: Request performer signature (via their endpoint)
+      const fullySignedContract = await this.getPerformerSignature(signedContract, providerAgentId);
+
+      // Step 4: Lock funds with fully signed contract
+      const body = { contract: fullySignedContract };
+      const headers = this.getSignedHeaders('POST', '/lock', body);
+      const response = await axios.post(`${this.escrowUrl}/lock`, body, { headers });
+
+      return response.data.lock.contractId;
+    }
+  }
+
+  /**
+   * Create a TaskContract for the delegation
+   */
+  private async createTaskContract(
+    contractId: string,
+    performerId: string,
+    amount: number,
+    request: Omit<DelegationRequest, 'payment'>
+  ): Promise<TaskContract> {
+    if (!this.agentId) {
+      throw new Error('agentId is required');
+    }
+
+    const deadline = new Date();
+    deadline.setSeconds(deadline.getSeconds() + (request.timeout || 300)); // Default 5 min
+
+    const contract: TaskContract = {
+      contractId,
+      version: '1.0.0',
+      delegatorId: this.agentId,
+      performerId,
+      capabilityName: request.task,
+      taskDescription: request.task,
+      taskInput: request.params || {},
+      deliverableSchema: {},
+      deadline,
+      createdAt: new Date(),
+      paymentAmount: amount,
+      stakeAmount: 0, // Optional: could require stake from performer
+      verificationRules: [
+        {
+          type: 'automated',
+          criteria: { successField: 'success' },
+          required: true,
+        },
+      ],
+      disputeWindow: {
+        durationSeconds: 300, // 5 minutes
+      },
+      slashingConditions: [],
+      escrowFunded: false,
+      disputeRaised: false,
+      metadata: {
+        createdBy: 'relay-simple-sdk',
+        requestedAt: new Date().toISOString(),
+      },
+      status: ContractStatus.DRAFT,
+    };
+
+    return contract;
+  }
+
+  /**
+   * Sign contract as delegator
+   */
+  private signContractAsDelegator(contract: TaskContract): TaskContract {
+    if (!this.keyPair) {
+      throw new Error('keyPair is required for signing');
+    }
+
+    const helper = new TaskContractHelper(contract);
+    const signable = helper.toSignable();
+    const signatureResult = RelaySign.sign(signable, this.keyPair.privateKey);
+
+    return {
+      ...contract,
+      delegatorSignature: signatureResult.signature,
+      status: ContractStatus.SIGNED,
+    };
+  }
+
+  /**
+   * Request performer to sign the contract
+   */
+  private async getPerformerSignature(
+    contract: TaskContract,
+    performerId: string
+  ): Promise<TaskContract> {
+    // Get performer's endpoint from registry
+    const headers = this.getSignedHeaders('GET', '/agents');
+    const response = await axios.get(`${this.registryUrl}/agents`, { headers });
+    const { agents } = response.data;
+
+    const performer = agents.find((a: any) => a.agentId === performerId);
+    if (!performer) {
+      throw new Error(`Performer ${performerId} not found in registry`);
+    }
+
+    // Request signature from performer's /contract/sign endpoint
+    try {
+      const body = { contract };
+      const signHeaders = this.getSignedHeaders('POST', '/contract/sign', body);
+      const signResponse = await axios.post(
+        `${performer.endpoint}/contract/sign`,
+        body,
+        { headers: signHeaders, timeout: 10000 }
+      );
+
+      return signResponse.data.contract;
+    } catch (error) {
+      throw new Error(
+        `Performer ${performerId} failed to sign contract. ` +
+        `They may not support production mode contracts yet.`
+      );
+    }
   }
 
   /**
    * Release escrow payment to provider
    */
-  private async releaseEscrow(escrowId: string): Promise<void> {
-    await axios.post(`${this.escrowUrl}/escrow/${escrowId}/release`);
+  private async releaseEscrow(lockId: string): Promise<void> {
+    if (this.developmentMode) {
+      await axios.post(`${this.escrowUrl}/release/simple`, { lockId });
+    } else {
+      const body = { contractId: lockId };
+      const headers = this.getSignedHeaders('POST', '/release', body);
+      await axios.post(`${this.escrowUrl}/release`, body, { headers });
+    }
   }
 
   /**
-   * Delegate task to agent
+   * Refund escrow payment to client
+   */
+  private async refundEscrow(lockId: string): Promise<void> {
+    if (this.developmentMode) {
+      await axios.post(`${this.escrowUrl}/refund/simple`, { lockId });
+    } else {
+      const body = { contractId: lockId };
+      const headers = this.getSignedHeaders('POST', '/refund', body);
+      await axios.post(`${this.escrowUrl}/refund`, body, { headers });
+    }
+  }
+
+  /**
+   * Delegate task to agent (with signed request)
    */
   private async delegateTask(
     agentEndpoint: string,
-    request: DelegationRequest & { taskId: string; escrowId: string }
+    request: DelegationRequest & { taskId: string; lockId: string }
   ): Promise<DelegationResult> {
     try {
-      const response = await axios.post(`${agentEndpoint}/execute`, request, {
+      const body = request;
+      const headers = this.getSignedHeaders('POST', '/execute', body);
+
+      const response = await axios.post(`${agentEndpoint}/execute`, body, {
+        headers,
         timeout: (request.timeout || 30) * 1000,
       });
 

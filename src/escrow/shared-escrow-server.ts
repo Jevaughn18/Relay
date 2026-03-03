@@ -10,7 +10,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { parse } from 'url';
 import { EscrowManager, EscrowPersistedState } from './escrow';
-import { TaskContract } from '../schemas/contract';
+import { TaskContract, ContractStatus } from '../schemas/contract';
 import { TaskContractHelper } from '../schemas/contract';
 import { RelaySign } from '../crypto/signer';
 import { ReplayCache, verifySignedRequest, RELAY_AUTH_HEADERS } from '../network/request-auth';
@@ -236,6 +236,98 @@ export class SharedEscrowServer {
         });
         return;
       }
+
+      // ===== DEVELOPMENT MODE ENDPOINTS (Simple, no contracts) =====
+      // WARNING: These bypass signature verification and contract requirements
+      // Use ONLY for development/testing. Disable in production.
+
+      if (pathname === '/lock/simple' && method === 'POST') {
+        const body = await this.readBody(req);
+        const { taskId, fromAgentId, toAgentId, amount } = JSON.parse(body);
+
+        if (!taskId || !fromAgentId || !toAgentId || !amount) {
+          this.sendJson(res, 400, { error: 'Missing required fields: taskId, fromAgentId, toAgentId, amount' });
+          return;
+        }
+
+        // Create minimal contract for simple mode
+        const simpleContract: TaskContract = {
+          contractId: taskId,
+          version: '1.0.0',
+          delegatorId: fromAgentId,
+          performerId: toAgentId,
+          capabilityName: 'simple_task',
+          taskDescription: 'Development mode task',
+          taskInput: {},
+          deliverableSchema: {},
+          deadline: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+          createdAt: new Date(),
+          paymentAmount: amount,
+          stakeAmount: 0,
+          verificationRules: [],
+          disputeWindow: { durationSeconds: 0 },
+          slashingConditions: [],
+          escrowFunded: false,
+          disputeRaised: false,
+          metadata: {},
+          status: ContractStatus.SIGNED,
+          delegatorSignature: 'dev-mode-signature',
+          performerSignature: 'dev-mode-signature',
+        };
+
+        const lock = this.manager.lockFunds(simpleContract);
+        await this.saveState();
+
+        this.sendJson(res, 200, {
+          success: true,
+          lockId: simpleContract.contractId,
+          contractId: simpleContract.contractId,
+          lock,
+        });
+        return;
+      }
+
+      if (pathname === '/release/simple' && method === 'POST') {
+        const body = await this.readBody(req);
+        const { lockId, contractId } = JSON.parse(body);
+        const id = contractId || lockId;
+
+        if (!id) {
+          this.sendJson(res, 400, { error: 'lockId or contractId is required' });
+          return;
+        }
+
+        const tx = this.manager.releaseFunds(id);
+        await this.saveState();
+
+        this.sendJson(res, 200, {
+          success: true,
+          transaction: tx,
+        });
+        return;
+      }
+
+      if (pathname === '/refund/simple' && method === 'POST') {
+        const body = await this.readBody(req);
+        const { lockId, contractId } = JSON.parse(body);
+        const id = contractId || lockId;
+
+        if (!id) {
+          this.sendJson(res, 400, { error: 'lockId or contractId is required' });
+          return;
+        }
+
+        const tx = this.manager.refundPayment(id);
+        await this.saveState();
+
+        this.sendJson(res, 200, {
+          success: true,
+          transaction: tx,
+        });
+        return;
+      }
+
+      // ===== END DEVELOPMENT MODE =====
 
       if (pathname.startsWith('/balance/') && method === 'GET') {
         const agentId = decodeURIComponent(pathname.replace('/balance/', ''));

@@ -14,6 +14,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
 import { RelayClient } from '../sdk/relay-client';
+import { getStoredToken, regenerateToken, ensureToken } from '../dashboard/auth';
+import { STARTER_AGENTS } from '../agents/index';
 
 const program = new Command();
 
@@ -84,7 +86,11 @@ async function autoInit(): Promise<void> {
     JSON.stringify({ balance: 1000 }, null, 2)
   );
 
+  // Generate dashboard token
+  const dashboardToken = ensureToken();
+
   console.log(chalk.green('✓ Relay initialized'));
+  console.log(chalk.dim(`  Dashboard Token: ${dashboardToken}`));
   console.log('');
 }
 
@@ -202,6 +208,90 @@ program
       console.log(chalk.green('✓ Relay stopped'));
     } catch (error) {
       console.log(chalk.yellow('⚠ Relay is not running'));
+    }
+  });
+
+/**
+ * relay token - Display or regenerate dashboard token
+ */
+program
+  .command('token')
+  .description('Display dashboard authentication token')
+  .option('-r, --regenerate', 'Generate a new token (invalidates old one)')
+  .option('-c, --copy', 'Copy token to clipboard (macOS only)')
+  .action(async (options) => {
+    try {
+      let token: string | null;
+
+      if (options.regenerate) {
+        token = regenerateToken();
+        console.log('');
+        console.log(chalk.green('✓ New dashboard token generated'));
+        console.log(chalk.yellow('⚠ Previous token is no longer valid'));
+        console.log('');
+      } else {
+        token = getStoredToken();
+        if (!token) {
+          console.log('');
+          console.log(chalk.yellow('⚠ No dashboard token found'));
+          console.log(chalk.dim('  Run "relay start" to initialize'));
+          console.log('');
+          return;
+        }
+        console.log('');
+        console.log(chalk.cyan('Dashboard Token:'));
+        console.log('');
+      }
+
+      console.log(chalk.bold(`  ${token}`));
+      console.log('');
+
+      if (options.copy && process.platform === 'darwin') {
+        // Copy to clipboard on macOS
+        const { execSync } = require('child_process');
+        execSync(`echo "${token}" | pbcopy`);
+        console.log(chalk.green('✓ Copied to clipboard'));
+        console.log('');
+      }
+
+      console.log(chalk.dim('  Use this token to authenticate in the dashboard'));
+      console.log(chalk.dim('  Dashboard: http://127.0.0.1:8787'));
+      console.log('');
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to get token:'), error);
+      process.exit(1);
+    }
+  });
+
+/**
+ * relay dashboard - Open dashboard in browser
+ */
+program
+  .command('dashboard')
+  .description('Open dashboard in browser')
+  .action(async () => {
+    const url = 'http://127.0.0.1:8787';
+    const start = process.platform === 'darwin' ? 'open' :
+                  process.platform === 'win32' ? 'start' : 'xdg-open';
+
+    try {
+      spawn(start, [url], { detached: true, stdio: 'ignore' }).unref();
+      console.log('');
+      console.log(chalk.green('✓ Dashboard opened in browser'));
+      console.log(chalk.dim(`  ${url}`));
+      console.log('');
+
+      const token = getStoredToken();
+      if (token) {
+        console.log(chalk.cyan('  Your token (if needed):'));
+        console.log(chalk.dim(`  ${token}`));
+        console.log('');
+      }
+    } catch (error) {
+      console.log('');
+      console.log(chalk.yellow('⚠ Could not open browser'));
+      console.log(chalk.dim(`  Open manually: ${url}`));
+      console.log('');
     }
   });
 
