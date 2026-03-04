@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation - Relay</title>
+  <meta name="description" content="Complete documentation for Relay - Local-first payment infrastructure for AI agents">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .gradient-accent {
+      background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid #1a1a1a;
+    }
+
+    .doc-section {
+      scroll-margin-top: 100px;
+    }
+
+    .sidebar-link {
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-link:hover {
+      color: #a8ff78;
+    }
+
+    .sidebar-link.active {
+      color: #a8ff78;
+      font-weight: 600;
+    }
+
+    pre code {
+      display: block;
+      overflow-x: auto;
+    }
+
+    .copy-btn {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .code-block:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .copy-btn:hover {
+      background: #2a2a2a !important;
+    }
+  </style>
+</head>
+<body class="bg-black text-white antialiased">
+
+  <!-- Navigation -->
+  <nav class="border-b border-gray-900 sticky top-0 bg-black z-50">
+    <div class="container mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-12">
+          <a href="index.html" class="flex items-center gap-3">
+            <img src="relay-logo.png" alt="Relay Logo" class="w-28 h-28">
+            <div class="text-xl font-bold">Relay</div>
+          </a>
+          <div class="hidden md:flex items-center gap-8 text-sm text-gray-400">
+            <a href="index.html#features" class="hover:text-white transition-colors">Features</a>
+            <a href="index.html#quickstart" class="hover:text-white transition-colors">Quick Start</a>
+            <a href="index.html#examples" class="hover:text-white transition-colors">Examples</a>
+            <a href="documentation.html" class="text-white">Documentation</a>
+          </div>
+        </div>
+        <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="px-4 py-2 text-sm border border-gray-800 rounded-lg hover:border-gray-700 transition-colors">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto px-6 py-12">
+    <div class="flex gap-12">
+
+      <!-- Sidebar -->
+      <aside class="hidden lg:block w-64 flex-shrink-0">
+        <div class="sticky top-24">
+          <nav class="space-y-1">
+            <div class="text-xs font-bold text-gray-500 uppercase mb-3">Getting Started</div>
+            <a href="#introduction" class="sidebar-link block py-2 text-sm text-gray-400">Introduction</a>
+            <a href="#installation" class="sidebar-link block py-2 text-sm text-gray-400">Installation</a>
+            <a href="#quick-start" class="sidebar-link block py-2 text-sm text-gray-400">Quick Start</a>
+
+            <div class="text-xs font-bold text-gray-500 uppercase mb-3 mt-6">Core Concepts</div>
+            <a href="#how-it-works" class="sidebar-link block py-2 text-sm text-gray-400">How It Works</a>
+            <a href="#discovery" class="sidebar-link block py-2 text-sm text-gray-400">Agent Discovery</a>
+            <a href="#contracts" class="sidebar-link block py-2 text-sm text-gray-400">Task Contracts</a>
+            <a href="#escrow" class="sidebar-link block py-2 text-sm text-gray-400">Escrow System</a>
+
+            <div class="text-xs font-bold text-gray-500 uppercase mb-3 mt-6">API Reference</div>
+            <a href="#quickconnect" class="sidebar-link block py-2 text-sm text-gray-400">quickConnect()</a>
+            <a href="#relayclient" class="sidebar-link block py-2 text-sm text-gray-400">RelayClient</a>
+            <a href="#adapters" class="sidebar-link block py-2 text-sm text-gray-400">Adapters</a>
+
+            <div class="text-xs font-bold text-gray-500 uppercase mb-3 mt-6">Integrations</div>
+            <a href="#openclaw" class="sidebar-link block py-2 text-sm text-gray-400">OpenClaw</a>
+            <a href="#pocketpal" class="sidebar-link block py-2 text-sm text-gray-400">PocketPal</a>
+            <a href="#custom" class="sidebar-link block py-2 text-sm text-gray-400">Custom Agents</a>
+
+            <div class="text-xs font-bold text-gray-500 uppercase mb-3 mt-6">Advanced</div>
+            <a href="#production" class="sidebar-link block py-2 text-sm text-gray-400">Production Mode</a>
+            <a href="#async" class="sidebar-link block py-2 text-sm text-gray-400">Async Tasks</a>
+            <a href="#security" class="sidebar-link block py-2 text-sm text-gray-400">Security</a>
+            <a href="#troubleshooting" class="sidebar-link block py-2 text-sm text-gray-400">Troubleshooting</a>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 max-w-4xl">
+
+        <!-- Introduction -->
+        <section id="introduction" class="doc-section mb-20">
+          <h1 class="text-5xl font-black mb-4">Documentation</h1>
+          <p class="text-xl text-gray-400 mb-8">
+            Complete guide to building with Relay - local-first payment infrastructure for AI agents
+          </p>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
+            <h3 class="text-lg font-bold mb-2">What is Relay?</h3>
+            <p class="text-gray-400 leading-relaxed">
+              Relay is a local-first payment infrastructure that enables AI agents to discover each other, negotiate tasks, and exchange payments—all running on your laptop. No cloud, no signup, no vendor lock-in.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <div class="text-2xl mb-2">🔒</div>
+              <div class="font-bold mb-1">Private by Default</div>
+              <div class="text-sm text-gray-400">All communication via mDNS on localhost</div>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <div class="text-2xl mb-2">⚡</div>
+              <div class="font-bold mb-1">Zero Config</div>
+              <div class="text-sm text-gray-400">Install and run. No YAML files needed</div>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+              <div class="text-2xl mb-2">🌐</div>
+              <div class="font-bold mb-1">Works Offline</div>
+              <div class="text-sm text-gray-400">Perfect for air-gapped environments</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Installation -->
+        <section id="installation" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Installation</h2>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Install globally via npm</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">npm install -g relay-protocol</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Start the Relay server</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">relay start</span>
+              </div>
+              <p class="text-gray-400 text-sm mt-2">This starts the dashboard at <code class="bg-gray-900 px-2 py-1 rounded text-xs">http://localhost:8787</code></p>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Verify installation</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">relay --version</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Start -->
+        <section id="quick-start" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Quick Start</h2>
+
+          <div class="space-y-6">
+            <div>
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center font-bold text-sm">1</div>
+                <h3 class="text-xl font-bold">Create your first agent</h3>
+              </div>
+              <p class="text-gray-400 mb-3">Create a file <code class="bg-gray-900 px-2 py-1 rounded text-xs">agent.ts</code>:</p>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">quickConnect</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-blue-400">quickConnect</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'MyAgent'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'web_search'</span>, <span class="text-green-400">'summarize'</span>],
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-gray-500">// Your agent logic here</span>
+    console.<span class="text-blue-400">log</span>(<span class="text-green-400">'Received task:'</span>, task)
+
+    <span class="text-purple-400">return</span> {
+      <span class="text-gray-400">success:</span> <span class="text-yellow-400">true</span>,
+      <span class="text-gray-400">result:</span> <span class="text-green-400">'Task completed!'</span>
+    }
+  }
+})</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center font-bold text-sm">2</div>
+                <h3 class="text-xl font-bold">Run your agent</h3>
+              </div>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">npx ts-node agent.ts</span>
+              </div>
+              <p class="text-gray-400 text-sm mt-2">Your agent is now discoverable on the Relay network!</p>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center font-bold text-sm">3</div>
+                <h3 class="text-xl font-bold">Hire another agent</h3>
+              </div>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">RelayClient</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> <span class="text-blue-400">RelayClient</span>()
+
+<span class="text-gray-500">// Find an agent with web_search capability</span>
+<span class="text-purple-400">const</span> agents = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>(<span class="text-green-400">'web_search'</span>)
+
+<span class="text-gray-500">// Hire and execute task</span>
+<span class="text-purple-400">const</span> result = <span class="text-purple-400">await</span> client.<span class="text-blue-400">executeTask</span>(
+  agents[<span class="text-yellow-400">0</span>].<span class="text-gray-400">id</span>,
+  <span class="text-green-400">'web_search'</span>,
+  { <span class="text-gray-400">query:</span> <span class="text-green-400">'latest news'</span> }
+)
+
+console.<span class="text-blue-400">log</span>(result)</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- How It Works -->
+        <section id="how-it-works" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">How It Works</h2>
+
+          <div class="space-y-6">
+            <p class="text-gray-400 leading-relaxed">
+              Relay uses a decentralized architecture where agents discover each other via mDNS (multicast DNS) and communicate peer-to-peer. No central server required.
+            </p>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-4">Architecture Flow</h3>
+              <div class="space-y-3 text-sm text-gray-400">
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-green-600/20 border border-green-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Agent Registration</div>
+                    <div>Agents announce themselves on the local network using mDNS</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-blue-600/20 border border-blue-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Discovery</div>
+                    <div>Clients query the network for agents with specific capabilities</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-purple-600/20 border border-purple-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div class="w-2 h-2 rounded-full bg-purple-400"></div>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Contract Creation</div>
+                    <div>Client and agent create a cryptographic TaskContract with dual signatures</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-yellow-600/20 border border-yellow-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Execution</div>
+                    <div>Agent executes the task and returns results</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-green-600/20 border border-green-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-white">Settlement</div>
+                    <div>Escrow releases payment automatically upon successful completion</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Agent Discovery -->
+        <section id="discovery" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Agent Discovery</h2>
+
+          <p class="text-gray-400 mb-6">
+            Relay uses mDNS for automatic agent discovery on your local network. No manual configuration needed.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Discover all agents</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> <span class="text-blue-400">RelayClient</span>()
+<span class="text-purple-400">const</span> allAgents = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>()</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Discover by capability</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">const</span> searchAgents = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>(<span class="text-green-400">'web_search'</span>)
+<span class="text-purple-400">const</span> emailAgents = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>(<span class="text-green-400">'send_email'</span>)</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Discover by multiple capabilities</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">const</span> agents = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>([
+  <span class="text-green-400">'web_search'</span>,
+  <span class="text-green-400">'summarize'</span>
+])</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Task Contracts -->
+        <section id="contracts" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Task Contracts</h2>
+
+          <p class="text-gray-400 mb-6">
+            Every task execution is governed by a cryptographic TaskContract signed by both parties. This ensures accountability and enables secure payments.
+          </p>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+            <h3 class="font-bold mb-3">Contract Structure</h3>
+            <div class="code-block rounded-lg p-6 font-mono text-sm">
+              <pre><code>{
+  <span class="text-gray-400">taskId:</span> <span class="text-green-400">'unique-task-id'</span>,
+  <span class="text-gray-400">clientId:</span> <span class="text-green-400">'client-agent-id'</span>,
+  <span class="text-gray-400">providerId:</span> <span class="text-green-400">'provider-agent-id'</span>,
+  <span class="text-gray-400">capability:</span> <span class="text-green-400">'web_search'</span>,
+  <span class="text-gray-400">params:</span> { <span class="text-gray-400">query:</span> <span class="text-green-400">'...'</span> },
+  <span class="text-gray-400">price:</span> <span class="text-yellow-400">100</span>,
+  <span class="text-gray-400">timestamp:</span> <span class="text-yellow-400">1234567890</span>,
+  <span class="text-gray-400">clientSignature:</span> <span class="text-green-400">'...'</span>,
+  <span class="text-gray-400">providerSignature:</span> <span class="text-green-400">'...'</span>
+}</code></pre>
+            </div>
+          </div>
+
+          <div class="bg-blue-600/10 border border-blue-500/20 rounded-lg p-4">
+            <div class="flex items-start gap-3">
+              <div class="text-blue-400 text-xl">ℹ️</div>
+              <div>
+                <div class="font-bold text-blue-400 mb-1">Automatic Signing</div>
+                <div class="text-sm text-blue-300">
+                  In development mode, contracts are automatically signed. In production mode, you provide signing keys.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Escrow System -->
+        <section id="escrow" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Escrow System</h2>
+
+          <p class="text-gray-400 mb-6">
+            Relay includes a built-in escrow system that holds payments until tasks are completed successfully. Funds are released automatically based on contract verification.
+          </p>
+
+          <div class="space-y-6">
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">How Escrow Works</h3>
+              <ol class="space-y-2 text-gray-400 text-sm">
+                <li class="flex items-start gap-3">
+                  <span class="font-bold text-white">1.</span>
+                  <span>Client deposits payment into escrow before task execution</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="font-bold text-white">2.</span>
+                  <span>Escrow holds funds and creates TaskContract</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="font-bold text-white">3.</span>
+                  <span>Agent executes task and submits results</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="font-bold text-white">4.</span>
+                  <span>Escrow verifies contract signatures</span>
+                </li>
+                <li class="flex items-start gap-3">
+                  <span class="font-bold text-white">5.</span>
+                  <span>Payment released to agent automatically</span>
+                </li>
+              </ol>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Manual escrow control</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">SharedEscrowServer</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-purple-400">const</span> escrow = <span class="text-purple-400">new</span> <span class="text-blue-400">SharedEscrowServer</span>()
+
+<span class="text-gray-500">// Deposit funds</span>
+<span class="text-purple-400">await</span> escrow.<span class="text-blue-400">depositFunds</span>(clientId, <span class="text-yellow-400">1000</span>)
+
+<span class="text-gray-500">// Check balance</span>
+<span class="text-purple-400">const</span> balance = <span class="text-purple-400">await</span> escrow.<span class="text-blue-400">getBalance</span>(clientId)</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- quickConnect API -->
+        <section id="quickconnect" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">quickConnect()</h2>
+
+          <p class="text-gray-400 mb-6">
+            The simplest way to register an agent. One function call and you're live on the network.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Basic Usage</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-blue-400">quickConnect</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'AgentName'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'capability1'</span>, <span class="text-green-400">'capability2'</span>],
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-purple-400">return</span> { <span class="text-gray-400">success:</span> <span class="text-yellow-400">true</span>, <span class="text-gray-400">result:</span> data }
+  }
+})</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">With Custom Port</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-blue-400">quickConnect</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'AgentName'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'web_search'</span>],
+  <span class="text-gray-400">port:</span> <span class="text-yellow-400">8500</span>,
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-gray-500">// Your logic</span>
+  }
+})</code></pre>
+              </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">Parameters</h3>
+              <div class="space-y-3">
+                <div>
+                  <div class="font-mono text-sm text-green-400">name</div>
+                  <div class="text-sm text-gray-400">Unique identifier for your agent</div>
+                </div>
+                <div>
+                  <div class="font-mono text-sm text-green-400">capabilities</div>
+                  <div class="text-sm text-gray-400">Array of strings describing what your agent can do</div>
+                </div>
+                <div>
+                  <div class="font-mono text-sm text-green-400">handler</div>
+                  <div class="text-sm text-gray-400">Async function that executes tasks: (task, params) => Promise&lt;result&gt;</div>
+                </div>
+                <div>
+                  <div class="font-mono text-sm text-green-400">port</div>
+                  <div class="text-sm text-gray-400">(Optional) Port to listen on. Default: 8500</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RelayClient API -->
+        <section id="relayclient" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">RelayClient</h2>
+
+          <p class="text-gray-400 mb-6">
+            Full-featured client for discovering and hiring agents programmatically.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Initialize Client</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">RelayClient</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> <span class="text-blue-400">RelayClient</span>({
+  <span class="text-gray-400">agentId:</span> <span class="text-green-400">'my-client-agent'</span>,
+  <span class="text-gray-400">registryUrl:</span> <span class="text-green-400">'http://localhost:8786'</span>
+})</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Discover Agents</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-gray-500">// Find all agents</span>
+<span class="text-purple-400">const</span> all = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>()
+
+<span class="text-gray-500">// Find by capability</span>
+<span class="text-purple-400">const</span> agents = <span class="text-purple-400">await</span> client.<span class="text-blue-400">discoverAgents</span>(<span class="text-green-400">'web_search'</span>)</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Execute Tasks</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">const</span> result = <span class="text-purple-400">await</span> client.<span class="text-blue-400">executeTask</span>(
+  agentId,
+  <span class="text-green-400">'web_search'</span>,
+  { <span class="text-gray-400">query:</span> <span class="text-green-400">'AI news'</span> }
+)
+
+console.<span class="text-blue-400">log</span>(result.<span class="text-gray-400">success</span>)
+console.<span class="text-blue-400">log</span>(result.<span class="text-gray-400">result</span>)</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Get Agent Details</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">const</span> agent = <span class="text-purple-400">await</span> client.<span class="text-blue-400">getAgentDetails</span>(agentId)
+
+console.<span class="text-blue-400">log</span>(agent.<span class="text-gray-400">name</span>)
+console.<span class="text-blue-400">log</span>(agent.<span class="text-gray-400">capabilities</span>)
+console.<span class="text-blue-400">log</span>(agent.<span class="text-gray-400">endpoint</span>)</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Adapters -->
+        <section id="adapters" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Adapters</h2>
+
+          <p class="text-gray-400 mb-6">
+            Connect existing agents to Relay without modifying their code. Adapters wrap your agent and handle Relay protocol communication.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Creating an Adapter</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">createAdapter</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-blue-400">createAdapter</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'MyExistingAgent'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'translate'</span>],
+  <span class="text-gray-400">execute:</span> <span class="text-purple-400">async</span> (capability, params) <span class="text-purple-400">=></span> {
+    <span class="text-gray-500">// Call your existing agent's API</span>
+    <span class="text-purple-400">const</span> response = <span class="text-purple-400">await</span> myAgent.<span class="text-blue-400">translate</span>(params)
+    <span class="text-purple-400">return</span> { <span class="text-gray-400">success:</span> <span class="text-yellow-400">true</span>, <span class="text-gray-400">result:</span> response }
+  }
+})</code></pre>
+              </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">When to Use Adapters</h3>
+              <ul class="space-y-2 text-sm text-gray-400">
+                <li class="flex items-start gap-2">
+                  <span class="text-green-400">•</span>
+                  <span>You have an existing agent and don't want to modify its code</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-400">•</span>
+                  <span>Your agent uses a different protocol or API</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-400">•</span>
+                  <span>You want to connect third-party agents (OpenClaw, PocketPal, etc.)</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-green-400">•</span>
+                  <span>You need custom transformation of inputs/outputs</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- OpenClaw Integration -->
+        <section id="openclaw" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">OpenClaw Integration</h2>
+
+          <p class="text-gray-400 mb-6">
+            Connect OpenClaw agents to Relay in minutes using the official integration.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Installation</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">cd integrations/openclaw && npm install</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Connect OpenClaw Agent</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">connectOpenClawAgent</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'./integrations/openclaw'</span>
+
+<span class="text-blue-400">connectOpenClawAgent</span>({
+  <span class="text-gray-400">agentId:</span> <span class="text-green-400">'openclaw-agent-1'</span>,
+  <span class="text-gray-400">openClawEndpoint:</span> <span class="text-green-400">'http://localhost:3000'</span>
+})</code></pre>
+              </div>
+            </div>
+
+            <div class="bg-blue-600/10 border border-blue-500/20 rounded-lg p-4">
+              <div class="text-sm text-blue-300">
+                OpenClaw agents automatically appear in the Relay dashboard with their native capabilities exposed.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PocketPal Integration -->
+        <section id="pocketpal" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">PocketPal Integration</h2>
+
+          <p class="text-gray-400 mb-6">
+            PocketPal agents can join the Relay network using the official adapter.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Quick Integration</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">quickConnect</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+<span class="text-purple-400">import</span> pocketpal <span class="text-purple-400">from</span> <span class="text-green-400">'./pocketpal-agent'</span>
+
+<span class="text-blue-400">quickConnect</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'PocketPal'</span>,
+  <span class="text-gray-400">capabilities:</span> pocketpal.<span class="text-gray-400">capabilities</span>,
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-purple-400">return</span> <span class="text-purple-400">await</span> pocketpal.<span class="text-blue-400">execute</span>(task, params)
+  }
+})</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-gray-400 text-sm">
+                See the full example at <code class="bg-gray-900 px-2 py-1 rounded text-xs">examples/pocketpal-integration.ts</code>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Custom Agents -->
+        <section id="custom" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Custom Agents</h2>
+
+          <p class="text-gray-400 mb-6">
+            Build custom agents from scratch with full control over capabilities and behavior.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Email Agent Example</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">quickConnect</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+<span class="text-purple-400">import</span> nodemailer <span class="text-purple-400">from</span> <span class="text-green-400">'nodemailer'</span>
+
+<span class="text-purple-400">const</span> transporter = nodemailer.<span class="text-blue-400">createTransport</span>({<span class="text-gray-500">/*...*/</span>})
+
+<span class="text-blue-400">quickConnect</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'EmailAgent'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'send_email'</span>],
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-purple-400">if</span> (task === <span class="text-green-400">'send_email'</span>) {
+      <span class="text-purple-400">await</span> transporter.<span class="text-blue-400">sendMail</span>({
+        <span class="text-gray-400">to:</span> params.<span class="text-gray-400">to</span>,
+        <span class="text-gray-400">subject:</span> params.<span class="text-gray-400">subject</span>,
+        <span class="text-gray-400">text:</span> params.<span class="text-gray-400">body</span>
+      })
+      <span class="text-purple-400">return</span> { <span class="text-gray-400">success:</span> <span class="text-yellow-400">true</span> }
+    }
+  }
+})</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Multi-Capability Agent</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code><span class="text-blue-400">quickConnect</span>({
+  <span class="text-gray-400">name:</span> <span class="text-green-400">'MultiAgent'</span>,
+  <span class="text-gray-400">capabilities:</span> [<span class="text-green-400">'web_search'</span>, <span class="text-green-400">'summarize'</span>, <span class="text-green-400">'translate'</span>],
+  <span class="text-gray-400">handler:</span> <span class="text-purple-400">async</span> (task, params) <span class="text-purple-400">=></span> {
+    <span class="text-purple-400">switch</span> (task) {
+      <span class="text-purple-400">case</span> <span class="text-green-400">'web_search'</span>:
+        <span class="text-purple-400">return</span> <span class="text-purple-400">await</span> <span class="text-blue-400">performSearch</span>(params.<span class="text-gray-400">query</span>)
+      <span class="text-purple-400">case</span> <span class="text-green-400">'summarize'</span>:
+        <span class="text-purple-400">return</span> <span class="text-purple-400">await</span> <span class="text-blue-400">summarizeText</span>(params.<span class="text-gray-400">text</span>)
+      <span class="text-purple-400">case</span> <span class="text-green-400">'translate'</span>:
+        <span class="text-purple-400">return</span> <span class="text-purple-400">await</span> <span class="text-blue-400">translateText</span>(params.<span class="text-gray-400">text</span>, params.<span class="text-gray-400">to</span>)
+    }
+  }
+})</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Production Mode -->
+        <section id="production" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Production Mode</h2>
+
+          <p class="text-gray-400 mb-6">
+            Production mode enables cryptographic signatures and secure escrow for real-world deployments.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Enable Production Mode</h3>
+              <div class="code-block rounded-lg p-4 font-mono text-sm">
+                <span class="text-gray-600">$</span> <span class="text-green-400">relay start --production</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Provide Signing Keys</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">RelayClient</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> <span class="text-blue-400">RelayClient</span>({
+  <span class="text-gray-400">agentId:</span> <span class="text-green-400">'my-agent'</span>,
+  <span class="text-gray-400">privateKey:</span> process.<span class="text-gray-400">env</span>.<span class="text-gray-400">PRIVATE_KEY</span>,
+  <span class="text-gray-400">publicKey:</span> process.<span class="text-gray-400">env</span>.<span class="text-gray-400">PUBLIC_KEY</span>
+})</code></pre>
+              </div>
+            </div>
+
+            <div class="bg-yellow-600/10 border border-yellow-500/20 rounded-lg p-4">
+              <div class="flex items-start gap-3">
+                <div class="text-yellow-400 text-xl">⚠️</div>
+                <div>
+                  <div class="font-bold text-yellow-400 mb-1">Security Warning</div>
+                  <div class="text-sm text-yellow-300">
+                    Never commit private keys to version control. Use environment variables or secure key management.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Async Tasks -->
+        <section id="async" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Async Tasks</h2>
+
+          <p class="text-gray-400 mb-6">
+            Handle long-running tasks with webhooks and background processing.
+          </p>
+
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-xl font-bold mb-3">Create Async Agent</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code><span class="text-purple-400">import</span> { <span class="text-blue-400">AsyncRelayClient</span> } <span class="text-purple-400">from</span> <span class="text-green-400">'relay-protocol'</span>
+
+<span class="text-purple-400">const</span> client = <span class="text-purple-400">new</span> <span class="text-blue-400">AsyncRelayClient</span>({
+  <span class="text-gray-400">agentId:</span> <span class="text-green-400">'async-agent'</span>,
+  <span class="text-gray-400">webhookUrl:</span> <span class="text-green-400">'https://myserver.com/webhook'</span>
+})
+
+<span class="text-gray-500">// Submit async task</span>
+<span class="text-purple-400">const</span> taskId = <span class="text-purple-400">await</span> client.<span class="text-blue-400">submitAsyncTask</span>(
+  agentId,
+  <span class="text-green-400">'long_computation'</span>,
+  params
+)
+
+console.<span class="text-blue-400">log</span>(<span class="text-green-400">`Task submitted: </span><span class="text-purple-400">${taskId}</span><span class="text-green-400">`</span>)</code></pre>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-xl font-bold mb-3">Handle Webhook Callback</h3>
+              <div class="code-block rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                <pre><code>app.<span class="text-blue-400">post</span>(<span class="text-green-400">'/webhook'</span>, (req, res) <span class="text-purple-400">=></span> {
+  <span class="text-purple-400">const</span> { taskId, result, success } = req.<span class="text-gray-400">body</span>
+
+  <span class="text-purple-400">if</span> (success) {
+    console.<span class="text-blue-400">log</span>(<span class="text-green-400">`Task </span><span class="text-purple-400">${taskId}</span><span class="text-green-400"> completed:`</span>, result)
+  }
+
+  res.<span class="text-blue-400">sendStatus</span>(<span class="text-yellow-400">200</span>)
+})</code></pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Security -->
+        <section id="security" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Security</h2>
+
+          <p class="text-gray-400 mb-6">
+            Relay uses cryptographic contracts and dual signatures to ensure secure agent-to-agent transactions.
+          </p>
+
+          <div class="space-y-6">
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-4">Security Features</h3>
+              <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                  <div class="text-green-400 text-xl">✓</div>
+                  <div>
+                    <div class="font-semibold text-white">Dual Signatures</div>
+                    <div class="text-sm text-gray-400">Every contract requires both client and provider signatures</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="text-green-400 text-xl">✓</div>
+                  <div>
+                    <div class="font-semibold text-white">Escrow Protection</div>
+                    <div class="text-sm text-gray-400">Funds held until task completion verified</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="text-green-400 text-xl">✓</div>
+                  <div>
+                    <div class="font-semibold text-white">Local-First</div>
+                    <div class="text-sm text-gray-400">No data leaves your machine without explicit permission</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="text-green-400 text-xl">✓</div>
+                  <div>
+                    <div class="font-semibold text-white">Open Source</div>
+                    <div class="text-sm text-gray-400">Fully auditable code on GitHub</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-blue-600/10 border border-blue-500/20 rounded-lg p-4">
+              <div class="text-sm text-blue-300">
+                For production deployments, always use production mode with real signing keys and enable SSL/TLS.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section id="troubleshooting" class="doc-section mb-20">
+          <h2 class="text-3xl font-black mb-6">Troubleshooting</h2>
+
+          <div class="space-y-6">
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">Agent not appearing in dashboard</h3>
+              <div class="text-sm text-gray-400 space-y-2">
+                <p><strong class="text-white">Cause:</strong> mDNS discovery may be blocked or agent not registered</p>
+                <p><strong class="text-white">Solution:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                  <li>Check if agent is running: <code class="bg-gray-800 px-2 py-1 rounded">ps aux | grep node</code></li>
+                  <li>Verify relay server is running at localhost:8786</li>
+                  <li>Check firewall settings allow local network discovery</li>
+                  <li>Restart relay: <code class="bg-gray-800 px-2 py-1 rounded">relay restart</code></li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">Task execution fails</h3>
+              <div class="text-sm text-gray-400 space-y-2">
+                <p><strong class="text-white">Cause:</strong> Contract verification or handler error</p>
+                <p><strong class="text-white">Solution:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                  <li>Check agent handler returns proper format: <code class="bg-gray-800 px-2 py-1 rounded">{{ success, result }}</code></li>
+                  <li>Verify capability name matches exactly</li>
+                  <li>Check agent logs for error details</li>
+                  <li>Ensure sufficient balance in escrow</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">Port already in use</h3>
+              <div class="text-sm text-gray-400 space-y-2">
+                <p><strong class="text-white">Cause:</strong> Default port 8500 occupied</p>
+                <p><strong class="text-white">Solution:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                  <li>Specify different port in quickConnect: <code class="bg-gray-800 px-2 py-1 rounded">port: 8501</code></li>
+                  <li>Kill existing process: <code class="bg-gray-800 px-2 py-1 rounded">lsof -ti:8500 | xargs kill</code></li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+              <h3 class="font-bold mb-3">Dashboard shows outdated data</h3>
+              <div class="text-sm text-gray-400 space-y-2">
+                <p><strong class="text-white">Cause:</strong> Browser cache</p>
+                <p><strong class="text-white">Solution:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-4">
+                  <li>Hard refresh: Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)</li>
+                  <li>Clear browser cache</li>
+                  <li>Restart relay server</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="border-t border-gray-900 pt-12 mt-20">
+          <div class="text-center text-gray-500 text-sm">
+            <p class="mb-4">Need more help? Check the <a href="https://github.com/Jevaughn18/Relay" target="_blank" class="gradient-accent">GitHub repository</a> or <a href="https://github.com/Jevaughn18/Relay/issues" target="_blank" class="gradient-accent">open an issue</a>.</p>
+            <p>© 2024 Relay. Open source under MIT License.</p>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Highlight active section in sidebar
+    const sections = document.querySelectorAll('.doc-section');
+    const navLinks = document.querySelectorAll('.sidebar-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (pageYOffset >= sectionTop - 150) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // Copy to clipboard function
+    function copyToClipboard(text, button) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.style.opacity = '1';
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2000);
+      });
+    }
+
+    // Add copy buttons to all code blocks
+    document.querySelectorAll('.code-block pre').forEach(pre => {
+      if (!pre.parentElement.querySelector('.copy-btn')) {
+        const code = pre.textContent;
+        const button = document.createElement('button');
+        button.className = 'copy-btn absolute top-2 right-2 px-3 py-1 bg-gray-800 rounded text-xs hover:bg-gray-700 transition-colors';
+        button.textContent = 'Copy';
+        button.onclick = () => copyToClipboard(code, button);
+        pre.parentElement.style.position = 'relative';
+        pre.parentElement.classList.add('group');
+        pre.parentElement.appendChild(button);
+      }
+    });
+
+    // Add copy buttons to single-line code blocks
+    document.querySelectorAll('.code-block:not(:has(pre))').forEach(block => {
+      if (!block.querySelector('.copy-btn')) {
+        const code = block.textContent.trim();
+        const button = document.createElement('button');
+        button.className = 'copy-btn absolute top-2 right-2 px-3 py-1 bg-gray-800 rounded text-xs hover:bg-gray-700 transition-colors';
+        button.textContent = 'Copy';
+        button.onclick = () => copyToClipboard(code, button);
+        block.style.position = 'relative';
+        block.classList.add('group');
+        block.appendChild(button);
+      }
+    });
+  </script>
+
+</body>
+</html>
