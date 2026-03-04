@@ -1,12 +1,13 @@
 /**
  * AG-UI Provider for Relay Dashboard
  *
- * Wraps the dashboard with CopilotKit and provides AG-UI context
+ * Provides AG-UI context and connection management
+ * CopilotKit integration will be added when AI features are needed
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { CopilotKit } from '@copilotkit/react-core';
-import '@copilotkit/react-ui/styles.css';
+// import { CopilotKit } from '@copilotkit/react-core';
+// import '@copilotkit/react-ui/styles.css';
 
 interface AGUIContextValue {
   enabled: boolean;
@@ -78,21 +79,12 @@ export function AGUIProvider({
     connected,
   };
 
-  // If AG-UI is disabled or not connected, render children without CopilotKit
-  if (!enabled || !connected) {
-    return (
-      <AGUIContext.Provider value={contextValue}>
-        {children}
-      </AGUIContext.Provider>
-    );
-  }
-
-  // Wrap with CopilotKit when enabled and connected
+  // For now, we're using AG-UI for event streaming only (not AI agents)
+  // CopilotKit integration will be added later when we need AI features
+  // Our components use direct event streaming via useRelayEvents hook
   return (
     <AGUIContext.Provider value={contextValue}>
-      <CopilotKit runtimeUrl={runtimeUrl}>
-        {children}
-      </CopilotKit>
+      {children}
     </AGUIContext.Provider>
   );
 }

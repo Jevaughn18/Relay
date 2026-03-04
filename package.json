@@ -40,6 +40,7 @@
     "dev": "tsx watch src/cli/index.ts",
     "start": "node dist/src/cli/index.js",
     "example:local": "node dist/examples/local-shared-credits.js",
+    "local": "tsx src/scripts/start-local-stack.ts",
     "stack:start": "tsx src/scripts/start-local-stack.ts",
     "dashboard:dev": "vite src/dashboard/ui",
     "dashboard:build": "vite build src/dashboard/ui --outDir ../../../dist/dashboard",

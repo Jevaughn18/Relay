@@ -95,8 +95,23 @@ export class RelayAGUIRuntime {
     // CORS for local development
     if (config.enableCors !== false) {
       this.app.use((req, res, next) => {
-        const origin = config.corsOrigin || 'http://localhost:8787';
-        res.header('Access-Control-Allow-Origin', origin);
+        // Allow both localhost and 127.0.0.1 for local development
+        const requestOrigin = req.headers.origin;
+        const allowedOrigins = [
+          'http://localhost:8787',
+          'http://127.0.0.1:8787',
+          config.corsOrigin,
+        ].filter(Boolean);
+
+        if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+          res.header('Access-Control-Allow-Origin', requestOrigin);
+        } else if (config.corsOrigin) {
+          res.header('Access-Control-Allow-Origin', config.corsOrigin);
+        } else {
+          // Default: accept localhost
+          res.header('Access-Control-Allow-Origin', 'http://localhost:8787');
+        }
+
         res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.header('Access-Control-Allow-Headers', 'Content-Type');
         if (req.method === 'OPTIONS') {

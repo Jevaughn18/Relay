@@ -13,9 +13,9 @@ export function AgentNetworkVisualizer() {
 
   if (!connected) {
     return (
-      <div className="relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-xl border border-gray-800 p-8">
-        <div className="text-center text-gray-400">
-          <div className="text-2xl mb-2">🔌</div>
+      <div className="relative bg-[#0a0a0a] border border-gray-800 rounded-lg p-8">
+        <div className="text-center text-gray-400 text-sm">
+          <div className="mb-2">●</div>
           <div>Connecting to AG-UI runtime...</div>
         </div>
       </div>
@@ -24,11 +24,10 @@ export function AgentNetworkVisualizer() {
 
   if (agents.length === 0) {
     return (
-      <div className="relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-xl border border-gray-800 p-8">
+      <div className="relative bg-[#0a0a0a] border border-gray-800 rounded-lg p-8">
         <div className="text-center text-gray-400">
-          <div className="text-4xl mb-4">🌐</div>
-          <div className="text-lg font-semibold mb-2">Network Ready</div>
-          <div className="text-sm">No agents connected yet. Register your first agent to see the network.</div>
+          <div className="text-sm font-medium mb-2">Network Ready</div>
+          <div className="text-xs text-gray-500">No agents connected yet</div>
         </div>
       </div>
     );
@@ -38,20 +37,17 @@ export function AgentNetworkVisualizer() {
   const additionalCount = Math.max(0, agents.length - 8);
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-xl border border-gray-800 p-8">
+    <div className="relative bg-[#0a0a0a] border border-gray-800 rounded-lg p-6">
       {/* Header with live indicator */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm text-green-400 font-medium">LIVE</span>
+        <h2 className="text-sm font-semibold text-white">Network Map</h2>
+        <div className="flex items-center gap-3 text-xs text-gray-400">
+          <span>{network.totalAgents} {network.totalAgents === 1 ? 'agent' : 'agents'}</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></div>
+            <span className="text-orange-500">LIVE</span>
           </div>
-          <span className="text-gray-500">|</span>
-          <span className="text-sm text-gray-400">
-            {network.totalAgents} {network.totalAgents === 1 ? 'agent' : 'agents'} online
-          </span>
         </div>
-        <div className="text-xs text-gray-500">Health: {network.health}</div>
       </div>
 
       {/* Network Visualization */}
@@ -176,14 +172,14 @@ export function AgentNetworkVisualizer() {
       </svg>
 
       {/* Legend */}
-      <div className="mt-6 flex items-center justify-center gap-6 text-sm">
+      <div className="mt-6 flex items-center justify-center gap-6 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-gray-400">Online</span>
+          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          <span className="text-gray-500">Online</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <span className="text-gray-400">Offline</span>
+          <div className="w-2 h-2 rounded-full bg-red-500"></div>
+          <span className="text-gray-500">Offline</span>
         </div>
       </div>
     </div>

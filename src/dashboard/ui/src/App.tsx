@@ -44,8 +44,8 @@ function App() {
 
   return (
     <AGUIProvider enabled={true}>
-      <div className="min-h-screen bg-gradient-to-br from-[#0b1226] to-[#101828]">
-        <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-black">
+        <div className="px-8 py-6">
           <Header
             activeTab={activeTab}
             onTabChange={setActiveTab}
