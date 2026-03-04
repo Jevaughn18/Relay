@@ -5,6 +5,7 @@ import EnhancedOverview from './components/EnhancedOverview';
 import AgentsTable from './components/AgentsTable';
 import Settings from './components/Settings';
 import AuthModal from './components/AuthModal';
+import { AGUIProvider } from './providers/AGUIProvider';
 
 type Tab = 'overview' | 'agents' | 'settings';
 
@@ -42,22 +43,24 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0b1226] to-[#101828]">
-      <div className="max-w-7xl mx-auto p-6">
-        <Header
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          connected={connected}
-          onLogout={handleLogout}
-        />
+    <AGUIProvider enabled={true}>
+      <div className="min-h-screen bg-gradient-to-br from-[#0b1226] to-[#101828]">
+        <div className="max-w-7xl mx-auto p-6">
+          <Header
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            connected={connected}
+            onLogout={handleLogout}
+          />
 
-        <div className="mt-6">
-          {activeTab === 'overview' && <EnhancedOverview stats={stats} agents={agents} />}
-          {activeTab === 'agents' && <AgentsTable agents={agents} />}
-          {activeTab === 'settings' && <Settings token={token} onLogout={handleLogout} />}
+          <div className="mt-6">
+            {activeTab === 'overview' && <EnhancedOverview stats={stats} agents={agents} />}
+            {activeTab === 'agents' && <AgentsTable agents={agents} />}
+            {activeTab === 'settings' && <Settings token={token} onLogout={handleLogout} />}
+          </div>
         </div>
       </div>
-    </div>
+    </AGUIProvider>
   );
 }
 

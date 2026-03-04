@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import RegisterAgentModal from './RegisterAgentModal';
 import NetworkMap from './NetworkMap';
+import { MigrationWrapper } from './ag-ui/MigrationWrapper';
+import { AgentNetworkVisualizer } from './ag-ui/AgentNetworkVisualizer';
+import { StreamingStatsCards } from './ag-ui/StreamingStatsCards';
 
 interface OverviewProps {
   stats: { totalAgents: number; onlineAgents: number; totalTasks: number };
@@ -40,14 +43,16 @@ export default function EnhancedOverview({ stats, agents }: OverviewProps) {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-600/10 to-blue-600/5 rounded-xl border border-blue-500/20 p-6 hover:border-blue-500/40 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-blue-400 text-sm font-medium">Total Agents</div>
-            <div className="text-2xl">🤖</div>
-          </div>
-          <div className="text-4xl font-bold text-white">{stats.totalAgents}</div>
+      {/* Stats Cards - AG-UI Integration */}
+      <MigrationWrapper
+        legacy={() => (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-blue-600/10 to-blue-600/5 rounded-xl border border-blue-500/20 p-6 hover:border-blue-500/40 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-blue-400 text-sm font-medium">Total Agents</div>
+                <div className="text-2xl">🤖</div>
+              </div>
+              <div className="text-4xl font-bold text-white">{stats.totalAgents}</div>
           <div className="text-blue-300 text-xs mt-1">Discovered on network</div>
         </div>
 
