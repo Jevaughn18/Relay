@@ -13,6 +13,7 @@ import { RegistryServer } from '../discovery/registry-server';
 import { SharedEscrowServer } from '../escrow/shared-escrow-server';
 import { DashboardWebSocketServer } from '../dashboard/websocket-server';
 import { eventBus } from '../dashboard/event-bus';
+import { RelayAGUIRuntime } from '../dashboard/ag-ui/runtime-server';
 
 function normalizeEndpoint(endpoint: string): string {
   return endpoint.replace('0.0.0.0', '127.0.0.1');
@@ -34,6 +35,7 @@ async function main(): Promise<void> {
   const escrowPort = parseInt(process.env.RELAY_ESCROW_PORT || '9010', 10);
   const dashboardPort = parseInt(process.env.RELAY_DASHBOARD_PORT || '8787', 10);
   const websocketPort = parseInt(process.env.RELAY_WEBSOCKET_PORT || '8788', 10);
+  const aguiPort = parseInt(process.env.RELAY_AGUI_PORT || '8789', 10);
   const stateFile =
     process.env.RELAY_ESCROW_STATE_FILE ||
     path.join(os.homedir(), '.relay', 'shared-escrow-state.json');
@@ -55,8 +57,24 @@ async function main(): Promise<void> {
 
   const wsServer = new DashboardWebSocketServer(websocketPort);
 
+  // AG-UI Runtime Server (optional - only if enabled)
+  const aguiEnabled = process.env.RELAY_AGUI_ENABLED !== 'false'; // enabled by default
+  let aguiRuntime: RelayAGUIRuntime | null = null;
+
+  if (aguiEnabled) {
+    aguiRuntime = new RelayAGUIRuntime({
+      port: aguiPort,
+      enableCors: true,
+      corsOrigin: `http://${host}:${dashboardPort}`,
+    });
+  }
+
   await registry.start();
   await escrow.start();
+
+  if (aguiRuntime) {
+    await aguiRuntime.start();
+  }
 
   // Connect event bus to WebSocket broadcasts
   eventBus.onEvent('agent:registered', (payload) => {
@@ -149,16 +167,25 @@ async function main(): Promise<void> {
     console.log(`   Escrow:     http://${host}:${escrowPort}`);
     console.log(`   Dashboard:  http://${host}:${dashboardPort}`);
     console.log(`   WebSocket:  ws://${host}:${websocketPort}`);
+    if (aguiRuntime) {
+      console.log(`   AG-UI:      http://${host}:${aguiPort}/api/events`);
+    }
     console.log('');
   });
 
   const shutdown = async () => {
     appServer.close();
-    await Promise.all([
+    const shutdownPromises = [
       registry.stop(),
       escrow.stop(),
       wsServer.close()
-    ]);
+    ];
+
+    if (aguiRuntime) {
+      shutdownPromises.push(aguiRuntime.stop());
+    }
+
+    await Promise.all(shutdownPromises);
     process.exit(0);
   };
 
